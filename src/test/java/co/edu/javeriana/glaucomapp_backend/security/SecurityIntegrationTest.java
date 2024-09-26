@@ -6,10 +6,9 @@ import org.springframework.modulith.test.ApplicationModuleTest;
 /**
  * Integration test for the security module.
  * <p>
- * This class is responsible for testing the integration of the security
- * features within the application module. It utilizes Spring's Modulith
- * testing framework to bootstrap the application context and verify
- * module functionality.
+ * This class is responsible for testing the integration of the Security module.
+ * It uses Spring Modulith's testing framework to verify that the module functions correctly
+ * within the application context.
  * </p>
  */
 @ApplicationModuleTest(mode = ApplicationModuleTest.BootstrapMode.DIRECT_DEPENDENCIES)

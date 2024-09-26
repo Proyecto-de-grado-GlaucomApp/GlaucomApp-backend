@@ -6,7 +6,9 @@ import org.springframework.modulith.test.ApplicationModuleTest;
 /**
  * Integration test for the API Key module.
  * <p>
- * This test verifies the correct configuration and wiring of the API Key module within the application.
+ * This class is responsible for testing the integration of the Api key module.
+ * It uses Spring Modulith's testing framework to verify that the module functions correctly
+ * within the application context.
  * </p>
  */
 @ApplicationModuleTest
