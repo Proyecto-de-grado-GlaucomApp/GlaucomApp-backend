@@ -53,11 +53,15 @@ public class ApiKeyFilter extends GenericFilterBean {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        // Check if the request is to /third-party/** and allow it without API key
-        if (httpRequest.getRequestURI().startsWith("/third-party/")) {
+        /*Checks if the request is directed to the "/glaucoma-screening/third-party" endpoint.
+         *If not, access is allowed without requiring an API key, 
+         *and the filter chain continues to the next filter.
+        */
+        if (!httpRequest.getRequestURI().startsWith("/glaucoma-screening/third-party")) {
             chain.doFilter(request, response);
             return;
         }
+
 
         // Retrieve API key from request header
         String apiKey = httpRequest.getHeader("X-API-KEY");

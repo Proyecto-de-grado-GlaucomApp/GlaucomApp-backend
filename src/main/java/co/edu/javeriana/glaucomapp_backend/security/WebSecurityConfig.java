@@ -47,8 +47,8 @@ public class WebSecurityConfig {
             .authorizeHttpRequests(requests -> 
                 requests
                     .requestMatchers("/api-key/**").permitAll() // Allow all requests to /api-key/**
-                    .requestMatchers("/glaucoma-screening/mobile").permitAll() // Allow all requests to /glaucoma-screening/**
-                    .requestMatchers("/glaucoma-screening/third-party").authenticated() // Require authentication for /third-party/**
+                    .requestMatchers("/glaucoma-screening/mobile/**").permitAll() // Allow all requests to /glaucoma-screening/**
+                    .requestMatchers("/glaucoma-screening/third-party/**").authenticated() // Require authentication for /third-party/**
                     .anyRequest().permitAll() // Allow access without authentication to other routes
             )
             .sessionManagement(session -> 
