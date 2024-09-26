@@ -1,10 +1,14 @@
 package co.edu.javeriana.glaucomapp_backend.apikey;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import co.edu.javeriana.glaucomapp_backend.apikey.exceptions.EmailAlreadyExistsException;
 
 /**
  * Controller for managing API key operations such as generating and invalidating API keys.
@@ -51,5 +55,17 @@ public class ApiKeyController {
     public ResponseEntity<String> invalidateApiKey(@RequestParam String apiKey) {
         apiKeyService.invalidateApiKey(apiKey);
         return ResponseEntity.ok("API Key invalidated successfully");
+    }
+
+
+    /**
+     * Handles the EmailAlreadyExistsException and returns a 409 CONFLICT response.
+     *
+     * @param ex the exception to handle
+     * @return a ResponseEntity with the error message
+     */
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<String> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
     }
 }

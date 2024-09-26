@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import co.edu.javeriana.glaucomapp_backend.apikey.exceptions.EmailAlreadyExistsException;
 import co.edu.javeriana.glaucomapp_backend.apikey.exposed.ApiKeyService;
 import lombok.RequiredArgsConstructor;
 
@@ -33,6 +34,11 @@ public class ApiKeyServiceImpl implements ApiKeyService {
      */
     @Override
     public ApiKeyEntity generateApiKey(String email, String entityName) {
+        // Check if the email is already associated with an existing API key
+        if (apiKeyRepository.findByEmail(email).isPresent()) {
+            throw new EmailAlreadyExistsException("The email address is already associated with an API key.");
+        }
+
         String apiKey = apiKeyManager.generateApiKey();
         ApiKeyEntity apiKeyEntity = new ApiKeyEntity();
         apiKeyEntity.setApiKey(apiKey);
@@ -44,7 +50,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
             ApiKeyEntity savedEntity = apiKeyRepository.save(apiKeyEntity);
             return savedEntity;
         } catch (Exception e) {
-            throw e;
+            throw e; // Consider logging the exception as well
         }
     }
 

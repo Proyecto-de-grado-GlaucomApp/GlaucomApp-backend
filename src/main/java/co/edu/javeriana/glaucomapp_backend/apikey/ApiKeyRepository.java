@@ -31,4 +31,12 @@ public interface ApiKeyRepository extends JpaRepository<ApiKeyEntity, Long> {
      * @return an {@link Optional} containing the matching {@link ApiKeyEntity}, or an empty {@link Optional} if not found
      */
     Optional<ApiKeyEntity> findByApiKeyAndActive(String apiKey, boolean b);
+
+    /**
+     * Finds an ApiKeyEntity by the given email.
+     *
+     * @param email the email to search for
+     * @return an Optional containing the found ApiKeyEntity, or an empty Optional if no entity is found
+     */
+    Optional<ApiKeyEntity> findByEmail(String email);
 }
