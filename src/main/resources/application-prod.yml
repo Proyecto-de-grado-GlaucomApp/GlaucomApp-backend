@@ -23,7 +23,7 @@ spring:
    
   modulith:
     republish-outstanding-events-on-restart: true
-    
+
 logging:
   level:
     root: INFO

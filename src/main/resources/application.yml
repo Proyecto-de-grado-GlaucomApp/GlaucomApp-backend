@@ -5,8 +5,12 @@ spring:
     profiles:
         active: dev
 
+    PYTHON_API_URL: ${PYTHON_API_URL}
+    JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+
+
         
 server:
-    port: 8080
+    port: 8000
     servlet:
         context-path: /
