@@ -52,40 +52,37 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    @Value("${jwt.expiration}")
-    private long expirationTime;
-
-    // Método para generar el JWT con claims personalizados
+    // Mehtod to generate the JWT token
     public String generateToken(MyUser userDetails) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("iss", "https://secure.genuinecoder.com");  // Añade un claim de emisor, puedes modificarlo
+        claims.put("id", userDetails.getId());  // ofthalmologist id
+        claims.put("name", userDetails.getName());  // ofthalmologist name
         return createToken(claims, userDetails.getUsername());
     }
 
-    // Método privado para construir el JWT con los claims
+    // Privet method to create the JWT token
     private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
                 .claims().empty().add(claims).and()
                 .subject(subject)  
                 .issuedAt(Date.from(Instant.now()))
-                .expiration(Date.from(Instant.now().plusMillis(expirationTime)))
                 .signWith(generateKey())  
                 .compact();
     }
 
-    // Método para generar la clave secreta en formato SecretKey
+    //Method to generate the secret key in SecretKey format
     private SecretKey generateKey() {
         byte[] decodedKey = Base64.getDecoder().decode(secretKey);
         return Keys.hmacShaKeyFor(decodedKey);
     }
 
-    // Extraer el nombre de usuario (subject) del token
+    // Extract the username (subject) from the token
     public String extractUsername(String jwt) {
         Claims claims = getClaims(jwt);
         return claims.getSubject();
     }
 
-    // Obtener los claims del JWT
+    //Obtain the claims of the JWT
     private Claims getClaims(String jwt) {
         return Jwts.parser()
                  .verifyWith(generateKey())
@@ -94,14 +91,13 @@ public class JwtService {
                  .getPayload();
     }
 
-    // Método para validar si el token es válido (no expirado)
-    public boolean isTokenValid(String jwt) {
-        Claims claims = getClaims(jwt);
-        return !isTokenExpired(claims);
-    }
-
-    // Verifica si el token ha expirado
-    private boolean isTokenExpired(Claims claims) {
-        return claims.getExpiration().before(Date.from(Instant.now()));
+     // Method to validate if the token is valid
+     public boolean isTokenValid(String jwt) {
+        try {
+            getClaims(jwt);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
