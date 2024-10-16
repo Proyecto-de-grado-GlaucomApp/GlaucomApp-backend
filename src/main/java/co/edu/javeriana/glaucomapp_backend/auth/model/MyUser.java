@@ -42,7 +42,7 @@ import lombok.NoArgsConstructor;
 public class MyUser {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "user_id")
     private Long id;
 
@@ -52,7 +52,7 @@ public class MyUser {
     @Column(name = "password", nullable = false)
     private String password;
 
-    @Column(name = "name", nullable = true)
+    @Column(name = "name", nullable = false)
     private String name;
 
     @Column(name = "role", nullable = true)
