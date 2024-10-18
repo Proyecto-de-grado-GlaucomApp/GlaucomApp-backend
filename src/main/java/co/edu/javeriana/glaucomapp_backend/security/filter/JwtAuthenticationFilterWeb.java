@@ -1,4 +1,4 @@
-package co.edu.javeriana.glaucomapp_backend.security;
+package co.edu.javeriana.glaucomapp_backend.security.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -30,10 +30,10 @@ import io.jsonwebtoken.UnsupportedJwtException;
  * JWT Authentication Filter for validating JWT tokens and setting the security context.
  */
 @Component
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
+public class JwtAuthenticationFilterWeb extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
 
-    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
+    public JwtAuthenticationFilterWeb(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
     }
 

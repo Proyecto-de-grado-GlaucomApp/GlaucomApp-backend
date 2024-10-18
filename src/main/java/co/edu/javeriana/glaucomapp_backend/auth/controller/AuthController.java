@@ -46,7 +46,7 @@ import co.edu.javeriana.glaucomapp_backend.auth.model.MyUser;
 import co.edu.javeriana.glaucomapp_backend.auth.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
 
-@RequestMapping("/auth")
+@RequestMapping("mobile/auth")
 @RestController
 public class AuthController {
 

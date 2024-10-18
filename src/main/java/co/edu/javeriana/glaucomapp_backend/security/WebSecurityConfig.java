@@ -1,19 +1,31 @@
 package co.edu.javeriana.glaucomapp_backend.security;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractAuthenticationFilterConfigurer;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import co.edu.javeriana.glaucomapp_backend.auth.service.MyUserDetailService;
 import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
+import co.edu.javeriana.glaucomapp_backend.security.apikey.ClientAuthenticationHelper;
+import co.edu.javeriana.glaucomapp_backend.security.filter.ApiKeyFilter;
+import co.edu.javeriana.glaucomapp_backend.security.filter.JwtAuthenticationFilterWeb;
+import co.edu.javeriana.glaucomapp_backend.security.filter.JwtAuthenticationFilter;
+
 
 /**
  * Configuration class for Spring Security.
@@ -24,6 +36,9 @@ import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
  */
 @Configuration
 public class WebSecurityConfig {
+
+    @Autowired
+    private MyUserDetailService userDetailService;
 
     @Bean
     public JwtUtil jwtUtil() {
@@ -39,9 +54,25 @@ public class WebSecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+        @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
+    }
+
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtUtil());
+    public JwtAuthenticationFilterWeb jwtAuthenticationFilterWeb() {
+        return new JwtAuthenticationFilterWeb(jwtUtil());
+    }
+
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return userDetailService;
     }
 
     @Bean
@@ -68,6 +99,22 @@ public class WebSecurityConfig {
      * @return a SecurityFilterChain for API key authentication
      * @throws Exception if an error occurs during configuration
      */
+
+    @Bean
+    @Order(4)
+    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+        return httpSecurity
+            .securityMatcher("/mobile/auth")
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(registry -> {
+                    registry.requestMatchers("/register/**", "/login").permitAll();
+                    registry.anyRequest().permitAll();
+                })
+                .formLogin(AbstractAuthenticationFilterConfigurer::permitAll)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
+    }
+
     @Bean
     @Order(3)
     public SecurityFilterChain apiKeySecurityFilterChain(HttpSecurity http) throws Exception {
@@ -137,7 +184,7 @@ public class WebSecurityConfig {
                     .requestMatchers("/api/v1/api-keys/users/**").hasAuthority("USER")
                     .anyRequest().permitAll() // Cualquier otra petición debe estar autenticada
             )
-                    .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class); // Añadir el filtro JWT
+                    .addFilterBefore(jwtAuthenticationFilterWeb(), UsernamePasswordAuthenticationFilter.class); // Añadir el filtro JWT
 
  
         return http.build();

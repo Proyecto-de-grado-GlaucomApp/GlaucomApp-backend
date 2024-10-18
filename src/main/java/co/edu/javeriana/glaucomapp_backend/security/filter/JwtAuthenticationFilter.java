@@ -21,7 +21,9 @@
  * @throws ServletException if an error occurs during the filtering process.
  * @throws IOException if an I/O error occurs during the filtering process.
  */
-package co.edu.javeriana.glaucomapp_backend.auth.filter;
+package co.edu.javeriana.glaucomapp_backend.security.filter;
+
+import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -31,13 +33,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import co.edu.javeriana.glaucomapp_backend.auth.config.JwtService;
+
 import co.edu.javeriana.glaucomapp_backend.auth.service.MyUserDetailService;
+import co.edu.javeriana.glaucomapp_backend.common.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 @Configuration
 public class JwtAuthenticationFilter extends OncePerRequestFilter{

@@ -24,7 +24,7 @@
  * - io.jsonwebtoken.security.Keys: For generating secret keys.
  * - lombok.Getter: For generating getter methods for the fields.
  */
-package co.edu.javeriana.glaucomapp_backend.auth.config;
+package co.edu.javeriana.glaucomapp_backend.common;
 
 import java.time.Instant;
 import java.util.Base64;
@@ -49,7 +49,7 @@ import lombok.Getter;
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret}")
+    @Value("${JWT_SECRET_KEY}")
     private String secretKey;
 
     // Mehtod to generate the JWT token

@@ -53,8 +53,9 @@ import org.springframework.stereotype.Service;
 import co.edu.javeriana.glaucomapp_backend.auth.model.LogInForm;
 import co.edu.javeriana.glaucomapp_backend.auth.model.MyUser;
 import co.edu.javeriana.glaucomapp_backend.auth.repository.MyUserRepository;
-import co.edu.javeriana.glaucomapp_backend.auth.config.JwtService;
+
 import co.edu.javeriana.glaucomapp_backend.auth.service.AuthService;
+import co.edu.javeriana.glaucomapp_backend.common.JwtService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 

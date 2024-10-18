@@ -1,10 +1,11 @@
 package co.edu.javeriana.glaucomapp_backend.common;
 
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,7 +15,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.InvalidKeyException;
 import io.jsonwebtoken.security.Keys;
 
@@ -40,11 +40,12 @@ public class JwtUtil {
 
             // Generar el token JWT
             return Jwts.builder()
-                    .setClaims(claims)
-                    .setSubject(userId.toString())
-                    .setIssuedAt(new Date(issuedAtEpoch))
-                    .setExpiration(new Date(expirationEpoch))
-                    .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+            .claims().add(claims).and()
+            
+                    .subject(userId.toString())
+                    .issuedAt(new Date(issuedAtEpoch))
+                    .expiration(new Date(expirationEpoch))
+                    .signWith(generateKey())
                     .compact();
 
         } catch (InvalidKeyException e) {
@@ -52,29 +53,30 @@ public class JwtUtil {
         }
     }
 
+
 public boolean validateToken(String token) {
     // 1. Verificar la firma del token y extraer los claims
     Claims claims;
     try {
-        claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+        claims = Jwts.parser()
+                .verifyWith(generateKey())
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
     } catch (JwtException e) { 
         // El token no es válido
         return false;
     }
 
     // 2. Verificar la expiración
-    if (isTokenExpired(claims.getExpiration())) {
-        return false; // Token expirado
-    }
-    return true; // Token válido
+    return !isTokenExpired(claims.getExpiration()); // Token expirado
 }
 
 
-
+    private SecretKey generateKey() {
+        byte[] decodedKey = Base64.getDecoder().decode(secretKey);
+        return Keys.hmacShaKeyFor(decodedKey);
+    }
 
 public boolean isTokenExpired(Date expiration) {
     try {
@@ -95,7 +97,11 @@ public boolean isTokenExpired(Date expiration) {
 
     // Extraer todos los claims
     private Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody(); // Usar la clave secreta inyectada
+        return Jwts.parser()
+                 .verifyWith(generateKey())
+                 .build()
+                 .parseSignedClaims(token)
+                 .getPayload();
     }
 
     // Verificar si el token está expirado
@@ -108,18 +114,16 @@ public boolean isTokenExpired(Date expiration) {
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
-    // Convertir la clave secreta a un objeto Key
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
-    }
 
     public String extractSubject(String jwt) {
-        return Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(jwt).getBody().getSubject();
+        Claims claims = extractAllClaims(jwt);
+        return claims.getSubject();
     }
 
     //extraer rol
     public String extractRole(String jwt) {
-        return Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(jwt).getBody().get("role", String.class);
+        Claims claims = extractAllClaims(jwt);
+        return claims.get("role", String.class);
     }
 
 }

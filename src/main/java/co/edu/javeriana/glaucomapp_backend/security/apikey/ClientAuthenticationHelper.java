@@ -1,4 +1,4 @@
-package co.edu.javeriana.glaucomapp_backend.security;
+package co.edu.javeriana.glaucomapp_backend.security.apikey;
 
 import org.springframework.stereotype.Service;
 
