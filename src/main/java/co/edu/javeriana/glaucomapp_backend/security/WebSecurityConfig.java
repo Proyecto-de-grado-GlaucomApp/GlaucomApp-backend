@@ -2,21 +2,54 @@ package co.edu.javeriana.glaucomapp_backend.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
 
 /**
  * Configuration class for Spring Security.
  * <p>
  * This class configures security settings for the application, including the integration
- * of API key authentication through a custom filter.
+ * of API key authentication and JWT token authentication through custom filters.
  * </p>
  */
 @Configuration
 public class WebSecurityConfig {
-    
+
+    @Bean
+    public JwtUtil jwtUtil() {
+        return new JwtUtil();
+    }
+    /**
+     * Provides a PasswordEncoder bean for encoding passwords.
+     * 
+     * @return a BCryptPasswordEncoder instance
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(jwtUtil());
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
+
     private final ClientAuthenticationHelper authServiceHelper;
 
     /**
@@ -29,33 +62,88 @@ public class WebSecurityConfig {
     }
 
     /**
-     * Configures the {@link SecurityFilterChain} with custom settings.
-     * <p>
-     * Adds the {@link ApiKeyFilter} to the security chain before the 
-     * {@link AnonymousAuthenticationFilter}. It defines which requests are permitted
-     * without authentication and configures session management to be stateless.
-     * </p>
-     *
-     * @param http the {@link HttpSecurity} object to configure
-     * @return the configured {@link SecurityFilterChain}
-     * @throws Exception if any configuration error occurs
+     * Configures the security filter chain for API key authentication.
+     * 
+     * @param http the HttpSecurity to configure
+     * @return a SecurityFilterChain for API key authentication
+     * @throws Exception if an error occurs during configuration
      */
     @Bean
-    public SecurityFilterChain configure(HttpSecurity http) throws Exception {
+    @Order(3)
+    public SecurityFilterChain apiKeySecurityFilterChain(HttpSecurity http) throws Exception {
         http
+        .securityMatcher("/glaucoma-screening")
             .addFilterBefore(new ApiKeyFilter(authServiceHelper), AnonymousAuthenticationFilter.class)
             .authorizeHttpRequests(requests -> 
                 requests
-                    .requestMatchers("/api-key/**").permitAll() // Allow all requests to /api-key/**
-                    .requestMatchers("/glaucoma-screening/mobile/**").permitAll() // Allow all requests to /glaucoma-screening/**
-                    .requestMatchers("/glaucoma-screening/third-party/**").authenticated() // Require authentication for /third-party/**
-                    .anyRequest().permitAll() // Allow access without authentication to other routes
-            )
+                    .requestMatchers("/glaucoma-screening/mobile/**").permitAll()
+                    .requestMatchers("/glaucoma-screening/upload-image").permitAll()
+                    // Allow all requests to /glaucoma-screening/mobile/**
+                    .requestMatchers("/glaucoma-screening/third-party/**").authenticated() // Require authentication for /glaucoma-screening/third-party/**
+                    .requestMatchers("/glaucoma-screening/path").permitAll() // Require ADMIN role for /glaucoma-screening/admin/**
+                    .anyRequest().permitAll() // Require authentication for all other requests
+                    )
             .sessionManagement(session -> 
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Stateless session management
             )
-            .csrf(csrf -> csrf.disable()); // Disable CSRF protection
+            .csrf(csrf -> csrf.disable()); // Disable CSRF protection for APIs
 
         return http.build();
     }
+
+        // A los que tienen auth no poner filtro
+        @Bean
+        @Order(2)
+        public SecurityFilterChain noFilterSecurityFilterChain(HttpSecurity http) throws Exception {
+            http
+            .securityMatcher("/api/v1/api-key/auth")
+                .authorizeHttpRequests(requests -> 
+                    requests
+                        .requestMatchers("/api/v1/api-key/auth/register").permitAll() // Allow access to registration without authentication
+                        .requestMatchers("/api/v1/api-key/auth/login").permitAll() // Allow access to login without authentication
+                        .anyRequest().permitAll() // Require authentication for all other requests
+                )
+                .sessionManagement(session -> 
+                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Stateless session management
+                )
+                .csrf(csrf -> csrf.disable()); // Disable CSRF protection for APIs
+    
+            return http.build();
+        }
+        
+    /**
+     * Configures the security filter chain for JWT token authentication.
+     * 
+     * @param http the HttpSecurity to configure
+     * @return a SecurityFilterChain for JWT authentication
+     * @throws Exception if an error occurs during configuration
+     */
+    @Bean
+    @Order(1)
+    public SecurityFilterChain jwtSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+        .csrf(csrf -> csrf.disable()) // Desactivar CSRF si usas JWT
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+            .securityMatcher("/api/v1/api-keys/**")// Esta es la base de los endpoints
+
+            .authorizeHttpRequests(authorize -> 
+                authorize
+                    // Asegúrate de que los ADMIN solo puedan acceder a los endpoints específicos
+                    .requestMatchers("/api/v1/api-keys/{apiKeyId}/approve").hasAuthority("ADMIN") 
+                    .requestMatchers("/api/v1/api-keys/approved").hasAuthority("ADMIN") 
+                    .requestMatchers("/api/v1/api-keys/pending").hasAuthority("ADMIN") 
+                    // Otras rutas pueden requerir otros permisos o ser accesibles por usuarios autenticados
+                    .requestMatchers("/api/v1/api-keys/users/**").hasAuthority("USER")
+                    .anyRequest().permitAll() // Cualquier otra petición debe estar autenticada
+            )
+                    .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class); // Añadir el filtro JWT
+
+ 
+        return http.build();
+    }
+    
+
+
+    
 }

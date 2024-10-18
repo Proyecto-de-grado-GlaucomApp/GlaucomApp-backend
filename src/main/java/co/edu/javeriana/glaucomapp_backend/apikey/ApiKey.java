@@ -2,6 +2,8 @@ package co.edu.javeriana.glaucomapp_backend.apikey;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -16,7 +18,7 @@ import lombok.Data;
  */
 @Data
 @Entity
-public class ApiKeyEntity {
+public class ApiKey {
 
     /**
      * Unique identifier for the API key entity.
@@ -33,24 +35,9 @@ public class ApiKeyEntity {
     @Column(nullable = false, unique = true)
     private String apiKey;
 
-    /**
-     * The email address associated with this API key.
-     * This field must be unique and cannot be null.
-     */
-    @Column(nullable = false, unique = true)
-    private String email;
-
-    /**
-     * The name of the entity that is linked to this API key.
-     * This field cannot be null.
-     */
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String entityName;
+    private ApiKeyStatus status = ApiKeyStatus.PENDING;  // Using the enum for API key status with default value
 
-    /**
-     * Indicates whether the API key is currently active.
-     * This field cannot be null and holds a boolean value.
-     */
-    @Column(nullable = false)
-    private boolean active;
+    private Long userApiId;
 }

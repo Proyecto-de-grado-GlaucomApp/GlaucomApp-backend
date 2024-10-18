@@ -15,12 +15,12 @@ import lombok.experimental.UtilityClass;
 public class ApiKeyUtil {
 
     /**
-     * Maps an {@link ApiKeyEntity} to an {@link ApiKeyDTO}.
+     * Maps an {@link ApiKey} to an {@link ApiKeyDTO}.
      *
-     * @param apiKey the {@link ApiKeyEntity} to be mapped
+     * @param apiKey the {@link ApiKey} to be mapped
      * @return an {@link ApiKeyDTO} containing the same data as the provided entity
      */
-    public static ApiKeyDTO mapApiKeyDTO(ApiKeyEntity apiKey) {
-        return new ApiKeyDTO(apiKey.getApiKey(), apiKey.getEmail(), apiKey.getEntityName(), apiKey.isActive());
+    public static ApiKeyDTO mapApiKeyDTO(ApiKey apiKey) {
+        return new ApiKeyDTO(apiKey.getApiKey(), apiKey.getStatus().toString());
     }
 }

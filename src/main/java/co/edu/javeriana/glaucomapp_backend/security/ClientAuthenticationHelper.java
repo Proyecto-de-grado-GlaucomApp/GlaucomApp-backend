@@ -2,7 +2,7 @@ package co.edu.javeriana.glaucomapp_backend.security;
 
 import org.springframework.stereotype.Service;
 
-import co.edu.javeriana.glaucomapp_backend.apikey.exposed.ApiKeyService;
+import co.edu.javeriana.glaucomapp_backend.apikey.exposed.ApiKeyExternalService;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ClientAuthenticationHelper {
 
-    private final ApiKeyService apiKeyService;
+    private final ApiKeyExternalService apiKeyService;
 
     /**
      * Validates the provided API key by checking its existence in the repository.
@@ -25,8 +25,6 @@ public class ClientAuthenticationHelper {
      * @return true if the API key exists and is active, false otherwise
      */
     public boolean validateApiKey(String apiKey) {
-        // Check if the API key exists in the repository
-        boolean isValid = apiKeyService.findByApiKey(apiKey);
-        return isValid;
+        return apiKeyService.isApiKeyValid(apiKey);
     }
 }

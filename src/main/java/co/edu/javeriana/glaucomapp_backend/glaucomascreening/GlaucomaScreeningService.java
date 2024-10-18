@@ -5,11 +5,16 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
@@ -38,11 +43,11 @@ public class GlaucomaScreeningService {
         try {
             byte[] buf = preprocessImage(file);
 
-            BufferedImage bufImg = postprocessImage(buf);
+            //BufferedImage bufImg = postprocessImage(buf);
             // Define la ruta donde deseas guardar la imagen
-            String outputPath = "imagePost.png";
-            File outputfile = new File(outputPath);
-            ImageIO.write(bufImg, "png", outputfile);
+            //String outputPath = "imagePost.png";
+            //File outputfile = new File(outputPath);
+            //ImageIO.write(bufImg, "png", outputfile);
 
    
             RestTemplate restTemplate = new RestTemplate();
@@ -51,9 +56,10 @@ public class GlaucomaScreeningService {
     
             HttpEntity<byte[]> requestEntity = new HttpEntity<>(buf, headers);
             ResponseEntity<String> response = restTemplate.postForEntity(pythonApiUrl, requestEntity, String.class);
-    
+
             if (response.getStatusCode().is2xxSuccessful()) {
-                processResponseData(response.getBody(), file);
+                //processResponseData(response.getBody(), file);
+                processResponseDataServer(response);
                 return response.getBody();
             } else if (response.getStatusCode().is4xxClientError()) {
                 throw new RuntimeException("Client error from external API: " + response.getStatusCode());
@@ -72,6 +78,107 @@ public class GlaucomaScreeningService {
     }
     
 
+
+    public void processResponseDataServer(ResponseEntity<String> response){
+       
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jsonResponse = response.getBody();
+
+        ServerResultDTO result = new ServerResultDTO();
+        System.out.println("Dentro de processResponseDataServer");
+
+        
+
+            try {
+                JsonNode jsonNode = objectMapper.readTree(response.getBody());
+                System.out.println("Se ha extraido el jsonNode");
+                //System.out.println("JsonNode: " + jsonNode);
+
+                //Escribir en un txt jsonnode
+                BufferedWriter writerQ = new BufferedWriter(new FileWriter("jsonNode.txt"));
+                writerQ.write(jsonNode + "\n");
+                
+                JsonNode bitmap = jsonNode.path("image").path("bitmap");
+                JsonNode coordinates = jsonNode.path("coordinates");
+                JsonNode distances = jsonNode.path("distances");
+                JsonNode perimeters = jsonNode.path("perimeters");
+                JsonNode areas = jsonNode.path("areas");
+
+                System.out.println("Pruebas...");
+
+                System.out.println("Bitmap: " + jsonNode.toString().substring(0, 50));
+                System.out.println("Bitmap: " + jsonNode.path("image").path("bitmap").toString().substring(0, 50));
+
+
+
+                            // Ejemplo de cadena Base64 que contiene la imagen en formato texto
+            String base64Image = bitmap.asText();  // reemplaza con tu valor de Base64
+
+
+
+                //System.out.println("Bitmap: " + Arrays.toString(bitmap.asText().getBytes()));
+
+
+                            // Decodifica el base64 a un arreglo de bytes
+            byte[] imageBytes = Base64.getDecoder().decode(base64Image);
+            System.out.println("ImageBytes: " + imageBytes);
+
+           
+            // Crea un InputStream desde los bytes
+            //ByteArrayInputStream bis = new ByteArrayInputStream(imageBytes);
+            
+            // Lee la imagen desde el InputStream
+            BufferedImage image = postprocessImage(base64Image.getBytes());
+            
+            // Guarda la imagen como PNG o JPEG
+            File outputfile = new File("output.png"); // Cambia la extensión si deseas guardar en otro formato, por ejemplo, "output.jpg"
+            ImageIO.write(image, "png", outputfile);  // Cambia "png" por "jpeg" si deseas guardar en JPEG
+                System.out.println("Bitmap: " + bitmap.toString());
+
+                String bitmapString = bitmap.textValue();
+                System.out.println("Bitmap: " + bitmap.toString());
+                result.setBitmap(bitmapString);
+            
+            List<Double> coordinatesList = new ArrayList<>();
+            coordinates.forEach(coordinate -> coordinatesList.add(coordinate.asDouble()));
+            result.setCoordinates(coordinatesList);
+
+            List<Double> distancesList = new ArrayList<>();
+            distances.forEach(distance -> distancesList.add(distance.asDouble()));
+            result.setDistances(distancesList);
+
+            List<Double> perimetersList = new ArrayList<>();
+            perimeters.forEach(perimeter -> perimetersList.add(perimeter.asDouble()));
+            result.setPerimeters(perimetersList);
+
+            List<Double> areasList = new ArrayList<>();
+            areas.forEach(area -> areasList.add(area.asDouble()));
+            result.setAreas(areasList);
+
+            System.out.println("Result: " + result.toString());
+
+
+            System.out.println("Response: " + bitmap);
+
+            //Escribir bitmap en un txt
+
+
+
+            //BufferedWriter writerQ = new BufferedWriter(new FileWriter("responsepRE.txt"));
+            //writerQ.write(response.getBody() + "\n");
+            // Deserializa el JSON en ServerResultDTO
+            
+            BufferedWriter writer = new BufferedWriter(new FileWriter("response.txt"));
+
+            writer.write(jsonResponse + "\n");
+
+            //ServerResultDTO result = objectMapper.readValue(jsonResponse, ServerResultDTO.class);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
 
     public void processResponseData(String jsonResponse, MultipartFile file) {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -175,7 +282,9 @@ public class GlaucomaScreeningService {
 
     public BufferedImage postprocessImage(byte[] data) throws IOException {
         // Crear un ByteBuffer para leer los datos
+        //System.out.println("Data:" + data.toString());
         ByteBuffer buffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+        //System.out.println("Buffer:" + buffer.get());
             
         // Leer la cabecera
         byte hdr = buffer.get();
@@ -185,6 +294,9 @@ public class GlaucomaScreeningService {
         int height = buffer.getInt();
         int width = buffer.getInt();
 
+        System.out.println("height:" + height);
+        System.out.println("width:" + width);
+
         // Leer los espacios y los orígenes (descartarlos)
     buffer.getFloat(); 
     buffer.getFloat(); 
@@ -192,11 +304,14 @@ public class GlaucomaScreeningService {
     buffer.getFloat();
 
     // Determinar los canales a partir de la cabecera
-    int channels = (hdr & 0x03) == 3 ? 4 : 3; // 2 -> 3 canales, 3 -> 4 canales
+    int channels = (hdr & 0x03) == 3 ? 3 : 4; // 2 -> 3 canales, 3 -> 4 canales
 
+    System.out.println("channels:" + channels);
     // Determinar el tamaño del píxel a partir de la cabecera
-    int pixSize = (hdr & 0x30) >> 4;
+    int pixSize = 1;
+    System.out.println("pixSize:" + pixSize);
     int bytesPerPixel = 1;
+    
     if (pixSize == 3) {
         bytesPerPixel = 2;
     } else if (pixSize == 5) {
@@ -204,15 +319,17 @@ public class GlaucomaScreeningService {
     }
 
     // Calcular el número total de píxeles
-    int numPixels = height * width * channels;
+    int numPixels = height * width * 3;
+    System.out.println("numPixels:" + numPixels);
 
     // Extraer los datos de píxeles
     byte[] pixels = new byte[numPixels * bytesPerPixel];
+    System.out.println("pixels:" + pixels);
     buffer.get(pixels);
 
     // Crear un BufferedImage basado en la información recuperada
     BufferedImage image = new BufferedImage(width, height, 
-                                            (channels == 4) ? BufferedImage.TYPE_4BYTE_ABGR : BufferedImage.TYPE_3BYTE_BGR);
+                                            (3 == 4) ? BufferedImage.TYPE_4BYTE_ABGR : BufferedImage.TYPE_3BYTE_BGR);
 
     // Cargar los píxeles en el BufferedImage
     image.getRaster().setDataElements(0, 0, width, height, pixels);

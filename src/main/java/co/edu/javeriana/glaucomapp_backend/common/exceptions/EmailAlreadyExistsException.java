@@ -1,4 +1,4 @@
-package co.edu.javeriana.glaucomapp_backend.apikey.exceptions;
+package co.edu.javeriana.glaucomapp_backend.common.exceptions;
 
 /**
  * Exception thrown when an attempt is made to create an API key for an email 

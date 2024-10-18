@@ -55,13 +55,13 @@ public class GlaucomaScreeningController {
         
 
         @PostMapping(value = "/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+
         public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file) {
                 if (file == null || file.isEmpty()) {
                         return ResponseEntity.badRequest().body("No file provided or file is empty."); // Error code 400
                 }
                 try {
                         String processedResult = glaucomaScreeningService.sendImageToApi(file);
-                        logger.info("Response from the service: " + processedResult);
 
                         ImageProcessingResultDTO result = glaucomaScreeningService.generateResult();
 

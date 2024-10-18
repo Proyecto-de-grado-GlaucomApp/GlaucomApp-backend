@@ -57,8 +57,10 @@ public class ApiKeyFilter extends GenericFilterBean {
          *If not, access is allowed without requiring an API key, 
          *and the filter chain continues to the next filter.
         */
-        if (!httpRequest.getRequestURI().startsWith("/glaucoma-screening/third-party")) {
+        if (!httpRequest.getRequestURI().startsWith("/glaucoma-screening")) {
             chain.doFilter(request, response);
+            System.err.println("Request: " + httpRequest.getRequestURI());
+            System.err.println("Request is not directed to the /glaucoma-screening/third-party endpoint");
             return;
         }
 
