@@ -21,6 +21,8 @@
 
 package co.edu.javeriana.glaucomapp_backend.auth.model;
 
+import java.util.UUID;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -42,9 +44,10 @@ import lombok.NoArgsConstructor;
 public class MyUser {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "user_id")
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "user_id", updatable = false, nullable = false, columnDefinition = "UUID DEFAULT uuid_generate_v4()")
+    private UUID id;
+
 
     @Column(name = "username", nullable = false, unique = true)
     private String username;
