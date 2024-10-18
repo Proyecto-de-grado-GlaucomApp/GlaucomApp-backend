@@ -116,7 +116,7 @@ public class AuthServiceImpl implements AuthService {
         jwtCookie.setHttpOnly(true);
         jwtCookie.setSecure(true); 
         jwtCookie.setPath("/");
-        jwtCookie.setMaxAge(60 * 60); 
+        jwtCookie.setMaxAge(-1); 
         // jwtCookie.setSameSite("Strict");
         // Manually set the SameSite attribute
         response.setHeader("Set-Cookie", String.format("%s=%s; HttpOnly; Secure; SameSite=Strict; Max-Age=%d; Path=/",
