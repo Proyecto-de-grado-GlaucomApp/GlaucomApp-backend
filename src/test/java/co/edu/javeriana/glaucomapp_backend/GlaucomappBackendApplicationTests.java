@@ -1,6 +1,8 @@
 package co.edu.javeriana.glaucomapp_backend;
 
+import static org.mockito.Mockito.mockStatic;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.SpringApplication;
 import org.springframework.modulith.core.ApplicationModules;
 import org.springframework.modulith.test.ApplicationModuleTest;
 
@@ -28,4 +30,14 @@ class GlaucomappBackendApplicationTests {
     void contextLoads() {
         ApplicationModules.of(GlaucomappBackendApplication.class).verify();
     }
+
+
+    	@Test
+	void main() {
+		try (var mockedSpringApplication = mockStatic(SpringApplication.class)) {
+			GlaucomappBackendApplication.main(new String[]{});
+            mockedSpringApplication.verify(() -> SpringApplication.run(GlaucomappBackendApplication.class, new String[]{}));
+		}
+	}
+
 }
