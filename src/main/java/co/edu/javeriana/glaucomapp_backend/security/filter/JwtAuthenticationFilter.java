@@ -6,7 +6,7 @@
  * If the token is valid, it sets the authentication in the SecurityContextHolder.
  * 
  * Dependencies:
- * - JwtService: Service to handle JWT operations such as extracting username and validating tokens.
+ * - jwtUtil: Service to handle JWT operations such as extracting username and validating tokens.
  * - MyUserDetailService: Service to load user details by username.
  * 
  * Methods:
@@ -33,9 +33,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-
-import co.edu.javeriana.glaucomapp_backend.auth.service.MyUserDetailService;
-import co.edu.javeriana.glaucomapp_backend.common.JwtService;
+import co.edu.javeriana.glaucomapp_backend.auth.exposed.MyUserDetailService;
+import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,8 +42,11 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 public class JwtAuthenticationFilter extends OncePerRequestFilter{
-    @Autowired
-    private JwtService jwtService;
+    private final JwtUtil jwtUtil;
+
+    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
 
     @Autowired
     private MyUserDetailService myUserDetailService;
@@ -58,10 +60,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
         }
 
         String jwt = authHeader.substring(7);
-        String username = jwtService.extractUsername(jwt);
+        String username = jwtUtil.extractSubject(jwt);
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = myUserDetailService.loadUserByUsername(username);
-            if (userDetails != null && jwtService.isTokenValid(jwt)) {
+            if (userDetails != null && jwtUtil.isTokenValid(jwt)) {
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                         username,
                         userDetails.getPassword(),

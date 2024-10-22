@@ -1,5 +1,6 @@
 package co.edu.javeriana.glaucomapp_backend.common;
 
+import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
@@ -11,9 +12,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import co.edu.javeriana.glaucomapp_backend.auth.exposed.MyUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.InvalidKeyException;
 import io.jsonwebtoken.security.Keys;
@@ -32,6 +33,22 @@ public class JwtUtil {
         return createToken(claims, userId);
     }
 
+        public String generateToken(MyUser userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("id", userDetails.getId());  // ofthalmologist id
+        claims.put("name", userDetails.getName());  // ofthalmologist name
+        return createToken(claims, userDetails.getUsername());
+    }
+
+    private String createToken(Map<String, Object> claims, String subject) {
+        return Jwts.builder()
+                .claims().empty().add(claims).and()
+                .subject(subject)  
+                .issuedAt(Date.from(Instant.now()))
+                .signWith(generateKey())  
+                .compact();
+    }
+    
     public String createToken(Map<String, Object> claims, Long userId) {
         try {
             // Fecha de emisión y expiración
@@ -55,21 +72,15 @@ public class JwtUtil {
 
 
 public boolean validateToken(String token) {
-    // 1. Verificar la firma del token y extraer los claims
-    Claims claims;
     try {
-        claims = Jwts.parser()
-                .verifyWith(generateKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-    } catch (JwtException e) { 
-        // El token no es válido
-        return false;
+        Date expiration = getClaims(token).getExpiration();
+        return expiration.before(new Date()); // Compara con la fecha actual
+    } catch (ExpiredJwtException e) {
+        return true; // Si ya ha expirado, devolver true
+    } catch (Exception e) {
+        return false; // Manejar otras excepciones
     }
 
-    // 2. Verificar la expiración
-    return !isTokenExpired(claims.getExpiration()); // Token expirado
 }
 
 
@@ -92,38 +103,52 @@ public boolean isTokenExpired(Date expiration) {
 
     // Extraer el email del JWT
     public String extractEmail(String token) {
-        return extractAllClaims(token).get("email", String.class);
+        return getClaims(token).get("email", String.class);
     }
 
-    // Extraer todos los claims
-    private Claims extractAllClaims(String token) {
-        return Jwts.parser()
-                 .verifyWith(generateKey())
-                 .build()
-                 .parseSignedClaims(token)
-                 .getPayload();
-    }
+
 
     // Verificar si el token está expirado
     public Boolean isTokenExpired(String token) {
-        return extractAllClaims(token).getExpiration().before(new Date());
+        return getClaims(token).getExpiration().before(new Date());
     }
 
+    // Method to validate if the token is valid (web)
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractEmail(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
+    // Method to validate if the token is valid (mobile)
+    public boolean isTokenValid(String jwt) {
+        try {
+            getClaims(jwt);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     public String extractSubject(String jwt) {
-        Claims claims = extractAllClaims(jwt);
+        Claims claims = getClaims(jwt);
         return claims.getSubject();
     }
 
     //extraer rol
     public String extractRole(String jwt) {
-        Claims claims = extractAllClaims(jwt);
+        Claims claims = getClaims(jwt);
         return claims.get("role", String.class);
     }
 
+
+
+
+        //Obtain the claims of the JWT
+        private Claims getClaims(String jwt) {
+            return Jwts.parser()
+                     .verifyWith(generateKey())
+                     .build()
+                     .parseSignedClaims(jwt)
+                     .getPayload();
+        }
 }

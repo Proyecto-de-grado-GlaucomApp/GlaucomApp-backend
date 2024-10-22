@@ -5,7 +5,7 @@
  * 
  *  This class uses Spring's {@link Service} annotation to indicate that it's a service component.
  * It also uses dependency injection to inject required dependencies such as {@link MyUserRepository},
- * {@link PasswordEncoder}, {@link AuthenticationManager}, and {@link JwtService}.
+ * {@link PasswordEncoder}, {@link AuthenticationManager}, and {@link jwtUtil}.
  * 
  *  Methods:
  *  
@@ -25,7 +25,7 @@
  *    - {@link MyUserRepository} - Repository for user data access. 
  *    - {@link PasswordEncoder} - Encoder for user passwords. 
  *    - {@link AuthenticationManager} - Manager for authentication processes. 
- *    - {@link JwtService} - Service for generating JWT tokens. 
+ *    - {@link jwtUtil} - Service for generating JWT tokens. 
  *  
  * 
  *  Security:
@@ -37,7 +37,7 @@
  * @see co.edu.javeriana.glaucomapp_backend.auth.model.MyUser
  * @see co.edu.javeriana.glaucomapp_backend.auth.model.LogInForm
  * @see co.edu.javeriana.glaucomapp_backend.auth.repository.MyUserRepository
- * @see co.edu.javeriana.glaucomapp_backend.auth.config.JwtService
+ * @see co.edu.javeriana.glaucomapp_backend.auth.config.jwtUtil
  */
 
 package co.edu.javeriana.glaucomapp_backend.auth.service.impl;
@@ -50,12 +50,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import co.edu.javeriana.glaucomapp_backend.auth.model.LogInForm;
-import co.edu.javeriana.glaucomapp_backend.auth.model.MyUser;
-import co.edu.javeriana.glaucomapp_backend.auth.repository.MyUserRepository;
 
+import co.edu.javeriana.glaucomapp_backend.auth.exposed.MyUser;
+import co.edu.javeriana.glaucomapp_backend.auth.model.LogInForm;
+import co.edu.javeriana.glaucomapp_backend.auth.repository.MyUserRepository;
 import co.edu.javeriana.glaucomapp_backend.auth.service.AuthService;
-import co.edu.javeriana.glaucomapp_backend.common.JwtService;
+import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -71,8 +71,12 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private AuthenticationManager authenticationManager;
 
-    @Autowired
-    private JwtService jwtService;
+    private final JwtUtil jwtUtil;
+
+    public AuthServiceImpl(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
+    
 
     @Override
     public MyUser register(MyUser user) {
@@ -108,7 +112,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
     
-        String token = jwtService.generateToken(user);
+        String token = jwtUtil.generateToken(user);
 
         System.out.println("Token: " + token);
 

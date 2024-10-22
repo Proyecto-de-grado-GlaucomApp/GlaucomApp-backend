@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
+import co.edu.javeriana.glaucomapp_backend.security.filter.JwtAuthenticationFilter;
+import co.edu.javeriana.glaucomapp_backend.security.filter.JwtAuthenticationFilterWeb;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
@@ -42,13 +44,13 @@ public class JwtAuthenticationFilterTest {
     @Mock
     private FilterChain chain;
 
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    private JwtAuthenticationFilterWeb jwtAuthenticationFilterWeb;
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this); // Initializes the mock objects
     
-        jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtUtil);
+        jwtAuthenticationFilterWeb = new JwtAuthenticationFilterWeb(jwtUtil);
 
         // Mock the PrintWriter to avoid NullPointerException
         try {
@@ -70,7 +72,7 @@ public class JwtAuthenticationFilterTest {
         when(jwtUtil.validateToken(token)).thenReturn(true);
         when(jwtUtil.extractRole(token)).thenReturn(role);
 
-        jwtAuthenticationFilter.doFilterInternal(request, response, chain);
+        jwtAuthenticationFilterWeb.doFilterInternal(request, response, chain);
 
         assertNotNull(SecurityContextHolder.getContext().getAuthentication());
         verify(chain, times(1)).doFilter(request, response);
@@ -83,7 +85,7 @@ public class JwtAuthenticationFilterTest {
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
         when(jwtUtil.extractEmail(token)).thenThrow(new ExpiredJwtException(null, null, "Token has expired"));
     
-        jwtAuthenticationFilter.doFilterInternal(request, response, chain);
+        jwtAuthenticationFilterWeb.doFilterInternal(request, response, chain);
     
         verify(response, times(1)).setStatus(HttpServletResponse.SC_UNAUTHORIZED); // Expecting 401
         verify(chain, never()).doFilter(request, response);
@@ -97,7 +99,7 @@ public class JwtAuthenticationFilterTest {
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
         when(jwtUtil.extractEmail(token)).thenThrow(new UnsupportedJwtException("Unsupported token"));
     
-        jwtAuthenticationFilter.doFilterInternal(request, response, chain);
+        jwtAuthenticationFilterWeb.doFilterInternal(request, response, chain);
     
         verify(response, times(1)).setStatus(HttpServletResponse.SC_UNAUTHORIZED); // Esperando 401
         verify(chain, never()).doFilter(request, response);
@@ -111,7 +113,7 @@ public class JwtAuthenticationFilterTest {
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
         when(jwtUtil.extractEmail(token)).thenThrow(new MalformedJwtException("Malformed token"));
 
-        jwtAuthenticationFilter.doFilterInternal(request, response, chain);
+        jwtAuthenticationFilterWeb.doFilterInternal(request, response, chain);
 
         verify(response, times(1)).setStatus(HttpServletResponse.SC_BAD_REQUEST);
         verify(chain, never()).doFilter(request, response);
@@ -124,7 +126,7 @@ public class JwtAuthenticationFilterTest {
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
         when(jwtUtil.extractEmail(token)).thenThrow(new IllegalArgumentException("Invalid token format"));
 
-        jwtAuthenticationFilter.doFilterInternal(request, response, chain);
+        jwtAuthenticationFilterWeb.doFilterInternal(request, response, chain);
 
         verify(response, times(1)).setStatus(HttpServletResponse.SC_BAD_REQUEST);
         verify(chain, never()).doFilter(request, response);
@@ -134,7 +136,7 @@ public class JwtAuthenticationFilterTest {
     void testDoFilterInternal_MissingJwt() throws ServletException, IOException {
         when(request.getHeader("Authorization")).thenReturn(null);
 
-        jwtAuthenticationFilter.doFilterInternal(request, response, chain);
+        jwtAuthenticationFilterWeb.doFilterInternal(request, response, chain);
 
         verify(chain, times(1)).doFilter(request, response);
     }
@@ -145,7 +147,7 @@ public class JwtAuthenticationFilterTest {
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
         when(jwtUtil.extractEmail(token)).thenThrow(new IllegalArgumentException("Invalid token format"));
 
-        jwtAuthenticationFilter.doFilterInternal(request, response, chain);
+        jwtAuthenticationFilterWeb.doFilterInternal(request, response, chain);
 
         verify(response, times(1)).setStatus(HttpServletResponse.SC_BAD_REQUEST);
         verify(response, times(1)).getWriter(); // Verifica que se haya llamado a getWriter

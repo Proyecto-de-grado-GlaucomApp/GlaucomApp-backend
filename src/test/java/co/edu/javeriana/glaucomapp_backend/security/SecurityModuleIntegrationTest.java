@@ -2,6 +2,7 @@ package co.edu.javeriana.glaucomapp_backend.security;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.modulith.test.ApplicationModuleTest;
+import org.springframework.test.context.ActiveProfiles;
 
 /**
  * Integration test for the security module.
@@ -12,7 +13,8 @@ import org.springframework.modulith.test.ApplicationModuleTest;
  * </p>
  */
 @ApplicationModuleTest(mode = ApplicationModuleTest.BootstrapMode.DIRECT_DEPENDENCIES)
-public class SecurityIntegrationTest {
+@ActiveProfiles("test")
+public class SecurityModuleIntegrationTest {
 
     /**
      * Verifies that the security module is correctly configured and initialized.

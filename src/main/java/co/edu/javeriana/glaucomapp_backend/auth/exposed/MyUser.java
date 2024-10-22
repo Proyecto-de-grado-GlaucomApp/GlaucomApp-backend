@@ -19,7 +19,7 @@
  * - role: The role of the user. It can be null.
  */
 
-package co.edu.javeriana.glaucomapp_backend.auth.model;
+package co.edu.javeriana.glaucomapp_backend.auth.exposed;
 
 import java.util.UUID;
 

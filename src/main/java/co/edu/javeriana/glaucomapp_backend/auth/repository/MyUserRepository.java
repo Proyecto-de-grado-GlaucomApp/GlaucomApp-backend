@@ -7,12 +7,12 @@
  */
 package co.edu.javeriana.glaucomapp_backend.auth.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import co.edu.javeriana.glaucomapp_backend.auth.model.MyUser;
-
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import co.edu.javeriana.glaucomapp_backend.auth.exposed.MyUser;
 
 public interface MyUserRepository extends JpaRepository<MyUser, UUID> {
 

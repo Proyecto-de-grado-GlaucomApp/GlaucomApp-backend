@@ -1,5 +1,6 @@
 @org.springframework.modulith.ApplicationModule(
-    type = Type.OPEN
+    type = Type.OPEN,
+    allowedDependencies = {"auth::exposed"}
 )
 package co.edu.javeriana.glaucomapp_backend.common;
 

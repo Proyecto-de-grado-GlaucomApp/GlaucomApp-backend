@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.SpringApplication;
 import org.springframework.modulith.core.ApplicationModules;
 import org.springframework.modulith.test.ApplicationModuleTest;
+import org.springframework.test.context.ActiveProfiles;
 
 /**
  * Integration tests for the Glaucomapp Backend application.
@@ -15,6 +16,7 @@ import org.springframework.modulith.test.ApplicationModuleTest;
  * </p>
  */
 @ApplicationModuleTest
+@ActiveProfiles("test")
 class GlaucomappBackendApplicationTests {
 
     /**

@@ -26,21 +26,9 @@
  */
 package co.edu.javeriana.glaucomapp_backend.common;
 
-import java.time.Instant;
-import java.util.Base64;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.crypto.SecretKey;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import co.edu.javeriana.glaucomapp_backend.auth.model.MyUser;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import lombok.Getter;
 
 
@@ -52,6 +40,7 @@ public class JwtService {
     @Value("${JWT_SECRET_KEY}")
     private String secretKey;
 
+    /*
     // Mehtod to generate the JWT token
     public String generateToken(MyUser userDetails) {
         Map<String, Object> claims = new HashMap<>();
@@ -100,4 +89,6 @@ public class JwtService {
             return false;
         }
     }
+
+     */
 }

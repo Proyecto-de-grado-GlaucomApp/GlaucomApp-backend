@@ -7,19 +7,18 @@
  * 
  * @Service Indicates that this class is a Spring service component.
  */
-package co.edu.javeriana.glaucomapp_backend.auth.service;
+package co.edu.javeriana.glaucomapp_backend.auth.exposed;
 
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import co.edu.javeriana.glaucomapp_backend.auth.model.MyUser;
-import co.edu.javeriana.glaucomapp_backend.auth.repository.*;
-import org.springframework.security.core.userdetails.User;
+import co.edu.javeriana.glaucomapp_backend.auth.repository.MyUserRepository;
 
 
 

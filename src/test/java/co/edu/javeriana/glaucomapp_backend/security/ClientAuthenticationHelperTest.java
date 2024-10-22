@@ -1,15 +1,16 @@
 package co.edu.javeriana.glaucomapp_backend.security;
 
-import co.edu.javeriana.glaucomapp_backend.apikey.exposed.ApiKeyExternalService;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.when;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
+import co.edu.javeriana.glaucomapp_backend.apikey.exposed.ApiKeyExternalService;
+import co.edu.javeriana.glaucomapp_backend.security.apikey.ClientAuthenticationHelper;
 
 class ClientAuthenticationHelperTest {
 

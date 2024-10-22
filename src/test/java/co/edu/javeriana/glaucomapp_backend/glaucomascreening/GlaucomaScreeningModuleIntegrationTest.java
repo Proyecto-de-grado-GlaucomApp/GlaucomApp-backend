@@ -2,6 +2,7 @@ package co.edu.javeriana.glaucomapp_backend.glaucomascreening;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.modulith.test.ApplicationModuleTest;
+import org.springframework.test.context.ActiveProfiles;
 
 /**
  * Integration test for the Glaucoma Screening module.
@@ -12,6 +13,7 @@ import org.springframework.modulith.test.ApplicationModuleTest;
  * </p>
  */
 @ApplicationModuleTest
+@ActiveProfiles("test")
 public class GlaucomaScreeningModuleIntegrationTest {
 
     /**

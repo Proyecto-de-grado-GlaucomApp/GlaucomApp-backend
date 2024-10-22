@@ -19,12 +19,12 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import co.edu.javeriana.glaucomapp_backend.auth.service.MyUserDetailService;
+import co.edu.javeriana.glaucomapp_backend.auth.exposed.MyUserDetailService;
 import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
 import co.edu.javeriana.glaucomapp_backend.security.apikey.ClientAuthenticationHelper;
 import co.edu.javeriana.glaucomapp_backend.security.filter.ApiKeyFilter;
-import co.edu.javeriana.glaucomapp_backend.security.filter.JwtAuthenticationFilterWeb;
 import co.edu.javeriana.glaucomapp_backend.security.filter.JwtAuthenticationFilter;
+import co.edu.javeriana.glaucomapp_backend.security.filter.JwtAuthenticationFilterWeb;
 
 
 /**
@@ -67,8 +67,13 @@ public class WebSecurityConfig {
         return new JwtAuthenticationFilterWeb(jwtUtil());
     }
 
-    @Autowired
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(jwtUtil());
+    }
+
+
 
     @Bean
     public UserDetailsService userDetailsService() {
@@ -111,7 +116,7 @@ public class WebSecurityConfig {
                     registry.anyRequest().permitAll();
                 })
                 .formLogin(AbstractAuthenticationFilterConfigurer::permitAll)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
