@@ -9,37 +9,45 @@ public class ImageProcessingResultDTOTest {
         void testConstructorAndGetters() {
                 // Arrange
                 String imageUrl = "http://example.com/image.jpg";
-                String diagnosticMessage = "No signs of glaucoma.";
-                int glaucomaLikelihoodPercentage = 10;
-                int ddlsStage = 1;
+                Double distanceRatio = 0.5;
+                Double perimeterRatio = 0.6;
+                Double areaRatio = 0.7;
 
                 // Act
-                ImageProcessingResultDTO result = new ImageProcessingResultDTO(
-                                imageUrl, diagnosticMessage, glaucomaLikelihoodPercentage, ddlsStage);
+                ImageProcessingResultDTO result = new ImageProcessingResultDTO();
+                result.setImageUrl(imageUrl);
+                result.setDistanceRatio(distanceRatio);
+                result.setPerimeterRatio(perimeterRatio);
+                result.setAreaRatio(areaRatio);
 
                 // Assert
-                assertEquals(imageUrl, result.imageUrl());
-                assertEquals(diagnosticMessage, result.diagnosticMessage());
-                assertEquals(glaucomaLikelihoodPercentage, result.glaucomaLikelihoodPercentage());
-                assertEquals(ddlsStage, result.ddlsStage());
+                assertEquals(imageUrl, result.getImageUrl());
+                assertEquals(distanceRatio, result.getDistanceRatio());
+                assertEquals(perimeterRatio, result.getPerimeterRatio());
+                assertEquals(areaRatio, result.getAreaRatio());
         }
 
         @Test
         void testConstructorWithDifferentValues() {
                 // Arrange
-                String imageUrl = "http://example.com/another_image.jpg";
-                String diagnosticMessage = "Signs of early glaucoma.";
-                int glaucomaLikelihoodPercentage = 50;
-                int ddlsStage = 2;
+                String imageUrl = "http://example.com/image.jpg";
+                Double distanceRatio = 0.5;
+                Double perimeterRatio = 0.6;
+                Double areaRatio = 0.7;
 
                 // Act
-                ImageProcessingResultDTO result = new ImageProcessingResultDTO(
-                                imageUrl, diagnosticMessage, glaucomaLikelihoodPercentage, ddlsStage);
+                ImageProcessingResultDTO result = new ImageProcessingResultDTO();
+                result.setImageUrl(imageUrl);
+                result.setDistanceRatio(distanceRatio);
+                result.setPerimeterRatio(perimeterRatio);
+                result.setAreaRatio(areaRatio);
+
 
                 // Assert
-                assertEquals(imageUrl, result.imageUrl());
-                assertEquals(diagnosticMessage, result.diagnosticMessage());
-                assertEquals(glaucomaLikelihoodPercentage, result.glaucomaLikelihoodPercentage());
-                assertEquals(ddlsStage, result.ddlsStage());
+                assertEquals(imageUrl, result.getImageUrl());
+                assertEquals(distanceRatio, result.getDistanceRatio());
+                assertEquals(perimeterRatio, result.getPerimeterRatio());
+                assertEquals(areaRatio, result.getAreaRatio());
+                
         }
 }

@@ -136,7 +136,7 @@ public class GlaucomaScreeningService {
             File outputfile = new File("output.png");
             ImageIO.write(image, "png", outputfile);
 
-            processresult.setImageUrl("https://miranza.es/wp-content/uploads/2020/09/Glaucoma-1.jpg");
+            processresult.setImageUrl(uploadImageToCloud(outputfile));
             processresult.setDistanceRatio(result.getDistances().get(1) / result.getDistances().get(0) * 100);
             processresult.setPerimeterRatio(result.getPerimeters().get(1) / result.getPerimeters().get(0)* 100);
             processresult.setAreaRatio(result.getAreas().get(1) / result.getAreas().get(0)* 100);
@@ -293,6 +293,11 @@ public class GlaucomaScreeningService {
 
         return image;
     }
+
+    String uploadImageToCloud(File file) {
+        return "https://miranza.es/wp-content/uploads/2020/09/Glaucoma-1.jpg";
+    }
+
 
     public ImageProcessingResultDTO generateResult() {
         ImageProcessingResultDTO result = new ImageProcessingResultDTO();
