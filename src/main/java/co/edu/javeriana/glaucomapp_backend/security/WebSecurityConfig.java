@@ -9,7 +9,6 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractAuthenticationFilterConfigurer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -105,6 +104,29 @@ public class WebSecurityConfig {
      * @throws Exception if an error occurs during configuration
      */
 
+
+     @Bean
+     @Order(5)
+     public SecurityFilterChain mobileJWTSecurityFilterChain(HttpSecurity http) throws Exception {
+         http
+         .securityMatcher("/mobile/glaucoma-screening")
+         .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+             .authorizeHttpRequests(requests -> 
+                 requests
+                     .requestMatchers("/mobile/glaucoma-screening/process").authenticated() // Require ADMIN role for /glaucoma-screening/admin/**
+                     
+                     .anyRequest().permitAll() // Require authentication for all other requests
+                     )
+                     
+             .sessionManagement(session -> 
+                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Stateless session management
+             )
+             .csrf(csrf -> csrf.disable()); // Disable CSRF protection for APIs
+ 
+         return http.build();
+     }
+
+
     @Bean
     @Order(4)
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
@@ -115,8 +137,6 @@ public class WebSecurityConfig {
                     registry.requestMatchers("/register/**", "/login").permitAll();
                     registry.anyRequest().permitAll();
                 })
-                .formLogin(AbstractAuthenticationFilterConfigurer::permitAll)
-                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
@@ -135,6 +155,7 @@ public class WebSecurityConfig {
                     .requestMatchers("/glaucoma-screening/path").permitAll() // Require ADMIN role for /glaucoma-screening/admin/**
                     .anyRequest().permitAll() // Require authentication for all other requests
                     )
+                    
             .sessionManagement(session -> 
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Stateless session management
             )

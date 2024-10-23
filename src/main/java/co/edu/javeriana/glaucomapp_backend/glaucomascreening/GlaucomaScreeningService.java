@@ -5,10 +5,8 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
-import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -39,16 +37,9 @@ public class GlaucomaScreeningService {
     @Value("${PYTHON_API_URL}") 
     private String pythonApiUrl;
 
-    public String sendImageToApi(MultipartFile file) {
+    public AppResultDTO sendImageToApi(MultipartFile file) {
         try {
             byte[] buf = preprocessImage(file);
-
-            //BufferedImage bufImg = postprocessImage(buf);
-            // Define la ruta donde deseas guardar la imagen
-            //String outputPath = "imagePost.png";
-            //File outputfile = new File(outputPath);
-            //ImageIO.write(bufImg, "png", outputfile);
-
    
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
@@ -58,16 +49,17 @@ public class GlaucomaScreeningService {
             ResponseEntity<String> response = restTemplate.postForEntity(pythonApiUrl, requestEntity, String.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
-                //processResponseData(response.getBody(), file);
-                processResponseDataServer(response);
-                return response.getBody();
+                int width = ImageIO.read(file.getInputStream()).getWidth();
+                int height = ImageIO.read(file.getInputStream()).getHeight();
+                return processResponseDataServer(response, width, height);
+                //return response.getBody();
             } else if (response.getStatusCode().is4xxClientError()) {
                 throw new RuntimeException("Client error from external API: " + response.getStatusCode());
             } else if (response.getStatusCode().is5xxServerError()) {
                 throw new RuntimeException("Server error from external API: " + response.getStatusCode());
             }
     
-            return null;  // Control should not reach here, but for safety
+            return null;  
         } catch (HttpServerErrorException e) {
             throw new RuntimeException("Error from external service: " + e.getResponseBodyAsString(), e);
         } catch (IOException e) {
@@ -79,69 +71,55 @@ public class GlaucomaScreeningService {
     
 
 
-    public void processResponseDataServer(ResponseEntity<String> response){
-       
+    public AppResultDTO processResponseDataServer(ResponseEntity<String> response, int width, int height) {
+        AppResultDTO processresult = new AppResultDTO();
         ObjectMapper objectMapper = new ObjectMapper();
-        String jsonResponse = response.getBody();
+
 
         ServerResultDTO result = new ServerResultDTO();
-        System.out.println("Dentro de processResponseDataServer");
-
-        
 
             try {
                 JsonNode jsonNode = objectMapper.readTree(response.getBody());
-                System.out.println("Se ha extraido el jsonNode");
-                //System.out.println("JsonNode: " + jsonNode);
 
-                //Escribir en un txt jsonnode
-                BufferedWriter writerQ = new BufferedWriter(new FileWriter("jsonNode.txt"));
-                writerQ.write(jsonNode + "\n");
-                
                 JsonNode bitmap = jsonNode.path("image").path("bitmap");
                 JsonNode coordinates = jsonNode.path("coordinates");
+                System.out.println("Coordinates: " + coordinates);
                 JsonNode distances = jsonNode.path("distances");
+                System.out.println("Distances: " + distances);
                 JsonNode perimeters = jsonNode.path("perimeters");
+                System.out.println("Perimeters: " + perimeters);
                 JsonNode areas = jsonNode.path("areas");
+                System.out.println("Areas: " + areas);
 
-                System.out.println("Pruebas...");
+            String base64Image = bitmap.asText();
+            Base64.getDecoder().decode(base64Image);
 
-                System.out.println("Bitmap: " + jsonNode.toString().substring(0, 50));
-                System.out.println("Bitmap: " + jsonNode.path("image").path("bitmap").toString().substring(0, 50));
+            BufferedImage image = postprocessImage(Base64.getDecoder().decode(bitmap.asText()), width, height);
+            String bitmapString = bitmap.textValue();
 
-
-
-                            // Ejemplo de cadena Base64 que contiene la imagen en formato texto
-            String base64Image = bitmap.asText();  // reemplaza con tu valor de Base64
-
-
-
-                //System.out.println("Bitmap: " + Arrays.toString(bitmap.asText().getBytes()));
-
-
-                            // Decodifica el base64 a un arreglo de bytes
-            byte[] imageBytes = Base64.getDecoder().decode(base64Image);
-            System.out.println("ImageBytes: " + imageBytes);
-
-           
-            // Crea un InputStream desde los bytes
-            //ByteArrayInputStream bis = new ByteArrayInputStream(imageBytes);
+            result.setBitmap(bitmapString);
             
-            // Lee la imagen desde el InputStream
-            BufferedImage image = postprocessImage(base64Image.getBytes());
-            
-            // Guarda la imagen como PNG o JPEG
-            File outputfile = new File("output.png"); // Cambia la extensión si deseas guardar en otro formato, por ejemplo, "output.jpg"
-            ImageIO.write(image, "png", outputfile);  // Cambia "png" por "jpeg" si deseas guardar en JPEG
-                System.out.println("Bitmap: " + bitmap.toString());
-
-                String bitmapString = bitmap.textValue();
-                System.out.println("Bitmap: " + bitmap.toString());
-                result.setBitmap(bitmapString);
-            
+            //System.out.println("Bitmap: ");
             List<Double> coordinatesList = new ArrayList<>();
             coordinates.forEach(coordinate -> coordinatesList.add(coordinate.asDouble()));
             result.setCoordinates(coordinatesList);
+
+            List<Double> pPoints = new ArrayList<>();
+            List<Double> qPoints = new ArrayList<>();
+            List<Double> rPoints = new ArrayList<>();
+
+            pPoints.add(coordinatesList.get(0));
+            pPoints.add(coordinatesList.get(1));
+
+            qPoints.add(coordinatesList.get(2));
+            qPoints.add(coordinatesList.get(3));
+
+            rPoints.add(coordinatesList.get(4));
+            rPoints.add(coordinatesList.get(5));
+
+            //drawPointsOnImage(image, pPoints, Color.GREEN);
+            //drawPointsOnImage(image, qPoints, Color.RED);
+            //drawPointsOnImage(image, rPoints, Color.BLUE);
 
             List<Double> distancesList = new ArrayList<>();
             distances.forEach(distance -> distancesList.add(distance.asDouble()));
@@ -155,28 +133,26 @@ public class GlaucomaScreeningService {
             areas.forEach(area -> areasList.add(area.asDouble()));
             result.setAreas(areasList);
 
-            System.out.println("Result: " + result.toString());
+            result.setSpaeth(result.getDistances().get(1) / result.getDistances().get(0));
+            System.out.println("Relación de distancias: " + result.getSpaeth());
 
+            result.setSpaethModificadoPerimetro(result.getPerimeters().get(1) / result.getPerimeters().get(0));
+            System.out.println("Relación de perímetros: " + result.getSpaethModificadoPerimetro());
+            result.setSpaethModificadoArea(result.getAreas().get(1) / result.getAreas().get(0));
+            System.out.println("Relación de áreas: " + result.getSpaethModificadoArea());
+            File outputfile = new File("output.png");
+            ImageIO.write(image, "png", outputfile);
 
-            System.out.println("Response: " + bitmap);
+            processresult.setImageUrl("https://miranza.es/wp-content/uploads/2020/09/Glaucoma-1.jpg");
+            processresult.setDistanceRatio(result.getDistances().get(1) / result.getDistances().get(0) * 100);
+            processresult.setPerimeterRatio(result.getPerimeters().get(1) / result.getPerimeters().get(0)* 100);
+            processresult.setAreaRatio(result.getAreas().get(1) / result.getAreas().get(0)* 100);
 
-            //Escribir bitmap en un txt
-
-
-
-            //BufferedWriter writerQ = new BufferedWriter(new FileWriter("responsepRE.txt"));
-            //writerQ.write(response.getBody() + "\n");
-            // Deserializa el JSON en ServerResultDTO
-            
-            BufferedWriter writer = new BufferedWriter(new FileWriter("response.txt"));
-
-            writer.write(jsonResponse + "\n");
-
-            //ServerResultDTO result = objectMapper.readValue(jsonResponse, ServerResultDTO.class);
-
+            return processresult;
         } catch (IOException e) {
             e.printStackTrace();
         }
+            return processresult;
 
     }
 
@@ -199,6 +175,25 @@ public class GlaucomaScreeningService {
         } catch (IOException ex) {
         }
     }
+
+
+    private void drawPointsOnImage(BufferedImage image, List<Double> points, Color color) {
+        Graphics2D g = (Graphics2D) image.getGraphics();
+        g.setColor(color);
+        g.setStroke(new BasicStroke(3));
+    
+        for (int i = 0; i < points.size(); i += 2) {
+            if (i + 1 < points.size()) {
+                int x = points.get(i).intValue();
+                int y = points.get(i + 1).intValue();
+                g.fillOval(x - 3, y - 3, 6, 6);
+            }
+        }
+    
+        g.dispose();
+    }
+    
+
 
     private void drawCoordinatesOnImage(BufferedImage image, JsonNode coordinates, Color color) {
         Graphics2D g = (Graphics2D) image.getGraphics();
@@ -230,6 +225,8 @@ public class GlaucomaScreeningService {
         System.out.println("pixels.length:" + pixels.length);
         System.out.println("size:" + size);
         System.out.println("channels:" + channels);
+        System.out.println("height:" + height);
+        System.out.println("width:" + width);
 
         byte[] hdr;
         hdr = new byte[1];
@@ -276,74 +273,36 @@ public class GlaucomaScreeningService {
         }
 
         buf.write(pixels);
+
         return buf.toByteArray();
         
     }
 
-    public BufferedImage postprocessImage(byte[] data) throws IOException {
-        // Crear un ByteBuffer para leer los datos
-        //System.out.println("Data:" + data.toString());
-        ByteBuffer buffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
-        //System.out.println("Buffer:" + buffer.get());
-            
-        // Leer la cabecera
-        byte hdr = buffer.get();
-        System.out.println("hdr:" + hdr);
 
-        // Leer el alto y el ancho
-        int height = buffer.getInt();
-        int width = buffer.getInt();
 
-        System.out.println("height:" + height);
-        System.out.println("width:" + width);
 
-        // Leer los espacios y los orígenes (descartarlos)
-    buffer.getFloat(); 
-    buffer.getFloat(); 
-    buffer.getFloat(); 
-    buffer.getFloat();
+    public BufferedImage postprocessImage(byte[] data, int width, int height) throws IOException {
 
-    // Determinar los canales a partir de la cabecera
-    int channels = (hdr & 0x03) == 3 ? 3 : 4; // 2 -> 3 canales, 3 -> 4 canales
+        data = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).array();
 
-    System.out.println("channels:" + channels);
-    // Determinar el tamaño del píxel a partir de la cabecera
-    int pixSize = 1;
-    System.out.println("pixSize:" + pixSize);
-    int bytesPerPixel = 1;
-    
-    if (pixSize == 3) {
-        bytesPerPixel = 2;
-    } else if (pixSize == 5) {
-        bytesPerPixel = 4;
-    }
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
+        int index = 0;
 
-    // Calcular el número total de píxeles
-    int numPixels = height * width * 3;
-    System.out.println("numPixels:" + numPixels);
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {              
+                int b = data[index++] & 0xFF;
+                int g = data[index++] & 0xFF;
+                int r = data[index++] & 0xFF;
+                int rgb = (r << 16) | (g << 8) | (b);
+                image.setRGB(x, y, rgb);
+            }
+        }
 
-    // Extraer los datos de píxeles
-    byte[] pixels = new byte[numPixels * bytesPerPixel];
-    System.out.println("pixels:" + pixels);
-    buffer.get(pixels);
-
-    // Crear un BufferedImage basado en la información recuperada
-    BufferedImage image = new BufferedImage(width, height, 
-                                            (3 == 4) ? BufferedImage.TYPE_4BYTE_ABGR : BufferedImage.TYPE_3BYTE_BGR);
-
-    // Cargar los píxeles en el BufferedImage
-    image.getRaster().setDataElements(0, 0, width, height, pixels);
- 
-
-    
         return image;
     }
-    
 
-    
-    //Genrate result from analysis
     public ImageProcessingResultDTO generateResult() {
-        
+        AppResultDTO result = new AppResultDTO();
         return new ImageProcessingResultDTO(
             "http://example.com/processed-image.jpg",
             "Imagen procesada correctamente.",
@@ -356,3 +315,4 @@ public class GlaucomaScreeningService {
 
 
 }
+

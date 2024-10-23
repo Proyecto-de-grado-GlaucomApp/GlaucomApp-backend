@@ -54,8 +54,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
       @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        System.out.println("AuthHeader: " + authHeader);
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        HttpServletResponse httpResponse = (HttpServletResponse) response;
+
+        if (!httpRequest.getRequestURI().startsWith("/mobile/glaucoma-screening")) {
             filterChain.doFilter(request, response);
+            //System.err.println("Request: " + httpRequest.getRequestURI());
+            return;
+        }
+        
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid API Key");
             return;
         }
 
