@@ -30,7 +30,7 @@ public class GlaucomaScreeningMobileController {
                         return ResponseEntity.badRequest().body("No file provided or file is empty."); // Error code 400
                 }
                 try {
-                        AppResultDTO processedResult = glaucomaScreeningService.sendImageToApi(file);
+                    ImageProcessingResultDTO processedResult = glaucomaScreeningService.sendImageToApi(file);
 
                         //ImageProcessingResultDTO result = glaucomaScreeningService.generateResult();
 

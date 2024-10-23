@@ -38,12 +38,12 @@ public class GlaucomaScreeningController {
                 System.out.println("Se ha procesado el archivo para probar el servicio");
 
                 // Simulated result of image processing
-                ImageProcessingResultDTO result = new ImageProcessingResultDTO(
-                                "http://example.com/processed-image.jpg", // URL of the processed image
-                                "Imagen procesada correctamente.", // Diagnostic message
-                                85, // Percentage likelihood of glaucoma
-                                2 // Stage on the Damage of Disc Scale (DDLS)
-                );
+                ImageProcessingResultDTO result = new ImageProcessingResultDTO();
+                result.setImageUrl("http://example.com/processed-image.jpg"); // URL of the processed image
+                result.setAreaRatio(0.5); // Area ratio
+                result.setPerimeterRatio(0.6); // Perimeter ratio
+                result.setDistanceRatio(0.7); // Distance ratio
+
 
                 return new ResponseEntity<>(result, HttpStatus.OK);
         }
@@ -61,7 +61,7 @@ public class GlaucomaScreeningController {
                         return ResponseEntity.badRequest().body("No file provided or file is empty."); // Error code 400
                 }
                 try {
-                        AppResultDTO processedResult = glaucomaScreeningService.sendImageToApi(file);
+                        ImageProcessingResultDTO processedResult = glaucomaScreeningService.sendImageToApi(file);
 
                         //AppResultDTO result = glaucomaScreeningService.generateResult();
 

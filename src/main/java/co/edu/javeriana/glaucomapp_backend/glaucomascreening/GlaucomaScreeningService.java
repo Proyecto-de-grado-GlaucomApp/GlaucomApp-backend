@@ -37,7 +37,7 @@ public class GlaucomaScreeningService {
     @Value("${PYTHON_API_URL}") 
     private String pythonApiUrl;
 
-    public AppResultDTO sendImageToApi(MultipartFile file) {
+    public ImageProcessingResultDTO sendImageToApi(MultipartFile file) {
         try {
             byte[] buf = preprocessImage(file);
    
@@ -71,8 +71,8 @@ public class GlaucomaScreeningService {
     
 
 
-    public AppResultDTO processResponseDataServer(ResponseEntity<String> response, int width, int height) {
-        AppResultDTO processresult = new AppResultDTO();
+    public ImageProcessingResultDTO processResponseDataServer(ResponseEntity<String> response, int width, int height) {
+        ImageProcessingResultDTO processresult = new ImageProcessingResultDTO();
         ObjectMapper objectMapper = new ObjectMapper();
 
 
@@ -133,13 +133,6 @@ public class GlaucomaScreeningService {
             areas.forEach(area -> areasList.add(area.asDouble()));
             result.setAreas(areasList);
 
-            result.setSpaeth(result.getDistances().get(1) / result.getDistances().get(0));
-            System.out.println("Relación de distancias: " + result.getSpaeth());
-
-            result.setSpaethModificadoPerimetro(result.getPerimeters().get(1) / result.getPerimeters().get(0));
-            System.out.println("Relación de perímetros: " + result.getSpaethModificadoPerimetro());
-            result.setSpaethModificadoArea(result.getAreas().get(1) / result.getAreas().get(0));
-            System.out.println("Relación de áreas: " + result.getSpaethModificadoArea());
             File outputfile = new File("output.png");
             ImageIO.write(image, "png", outputfile);
 
@@ -302,13 +295,12 @@ public class GlaucomaScreeningService {
     }
 
     public ImageProcessingResultDTO generateResult() {
-        AppResultDTO result = new AppResultDTO();
-        return new ImageProcessingResultDTO(
-            "http://example.com/processed-image.jpg",
-            "Imagen procesada correctamente.",
-            85,
-            2
-        );
+        ImageProcessingResultDTO result = new ImageProcessingResultDTO();
+        result.setImageUrl("http://example.com/processed-image.jpg");
+        result.setDistanceRatio(85.0);
+        result.setPerimeterRatio(2.0);
+        result.setAreaRatio(3.0);
+        return result;
     }
 
 

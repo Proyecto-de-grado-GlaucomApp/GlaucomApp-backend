@@ -17,9 +17,6 @@ public class ServerResultDTO {
         private List<Double> distances;
         private List<Double> perimeters;
         private List<Double> areas;
-        private Double spaeth;
-        private Double spaethModificadoPerimetro;
-        private Double spaethModificadoArea;
 
 
 }
