@@ -1,3 +1,9 @@
+/**
+ * Service interface for managing exams in the clinical history.
+ * Provides methods to save, retrieve, and delete exams.
+ * 
+ * @service ExamService
+ */
 package co.edu.javeriana.glaucomapp_backend.clinical_history.service;
 
 import java.util.List;
