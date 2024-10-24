@@ -1,3 +1,9 @@
+/**
+ * Service interface for managing patients in the GlaucomApp application.
+ * Provides methods for saving, retrieving, and deleting patient records.
+ * 
+ * @author 
+ */
 package co.edu.javeriana.glaucomapp_backend.clinical_history.service;
 
 
