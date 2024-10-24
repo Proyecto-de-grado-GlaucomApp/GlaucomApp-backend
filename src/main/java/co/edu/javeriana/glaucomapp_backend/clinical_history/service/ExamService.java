@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.Exam;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.ExamRequest;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.ExamRes;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.ExamsResponse;
@@ -15,9 +14,9 @@ public interface ExamService {
 
     public List<ExamsResponse> getExamsByPacient(String ophtalIdString, String pacientIdString,int startIndex, int endIndex);
 
-    public void deleteExam(String examId);
+    public void deleteExam(String ophtalIdString, String pacientIdString,String examId);
 
-    public ExamRes getExamById(String examId);
+    public ExamRes getExamById(String ophtalIdString, String pacientIdString,String examId);
     
 } 
 

@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.Exam;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.ExamRequest;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.ExamRes;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.ExamsResponse;
@@ -102,10 +101,10 @@ public class CHController {
     }
 
     @DeleteMapping("delete/exam/{examId}")
-    public ResponseEntity<String> deleteExam (@RequestHeader("Authorization") String token,  @PathVariable String examId){
+    public ResponseEntity<String> deleteExam (@RequestHeader("Authorization") String token,  @PathVariable String examId, @RequestParam String pacientId){
         String ophtalIdString = validateToken(token);
         try {
-            examService.deleteExam(examId);
+            examService.deleteExam(ophtalIdString, pacientId,examId);
             return ResponseEntity.ok("Exam deleted successfully");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Exam cannot be deleted: " + e.getMessage());
@@ -113,10 +112,10 @@ public class CHController {
     }
 
     @GetMapping("get/exam")
-    public ResponseEntity<ExamRes> getExam(@RequestHeader("Authorization") String token,  @RequestParam String examId){
+    public ResponseEntity<ExamRes> getExam(@RequestHeader("Authorization") String token,  @RequestParam String examId, @RequestParam String pacientId){
         String ophtalIdString = validateToken(token);
         try {
-            ExamRes exam = examService.getExamById(examId);
+            ExamRes exam = examService.getExamById(ophtalIdString,pacientId, examId);
             return ResponseEntity.ok(exam);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
