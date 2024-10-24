@@ -21,19 +21,22 @@
 
 package co.edu.javeriana.glaucomapp_backend.auth.exposed;
 
+import java.util.List;
 import java.util.UUID;
 
+import co.edu.javeriana.glaucomapp_backend.clinical_history.model.pacient.Pacient;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 
 @Entity
 @Data
@@ -45,9 +48,8 @@ public class MyUser {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "user_id", updatable = false, nullable = false, columnDefinition = "UUID DEFAULT uuid_generate_v4()")
+    @Column(name = "ophtal_id", updatable = false, nullable = false, columnDefinition = "UUID DEFAULT uuid_generate_v4()")
     private UUID id;
-
 
     @Column(name = "username", nullable = false, unique = true)
     private String username;
@@ -60,4 +62,12 @@ public class MyUser {
 
     @Column(name = "role", nullable = true)
     private String role;
+
+    @OneToMany(mappedBy = "ophthalUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Pacient> pacients;
+
+    @Override
+    public String toString() {
+        return "MyUser{id=" + id + ", username='" + username + "', name='" + name + "', role='" + role + "'}";
+    }
 }

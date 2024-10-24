@@ -19,6 +19,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import co.edu.javeriana.glaucomapp_backend.auth.repository.MyUserRepository;
+import jakarta.transaction.Transactional;
 
 
 
@@ -28,6 +29,7 @@ public class MyUserDetailService implements UserDetailsService {
     @Autowired
     private MyUserRepository userRepository;
 
+    @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<MyUser> user = userRepository.findByUsername(username);
         if (user.isPresent()) {
