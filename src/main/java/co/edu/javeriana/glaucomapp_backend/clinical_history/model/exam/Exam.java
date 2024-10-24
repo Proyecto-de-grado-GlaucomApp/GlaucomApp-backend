@@ -1,3 +1,33 @@
+/**
+ * Represents an Exam entity in the system.
+ * This entity is used to store information about a medical exam.
+ * 
+ * Annotations:
+ * 
+ *   {@link Entity} - Specifies that the class is an entity and is mapped to a database table.
+ *   {@link Data} - A Lombok annotation to generate getters, setters, toString, equals, and hashCode methods.
+ *   {@link Builder} - A Lombok annotation to implement the builder pattern.
+ *   {@link AllArgsConstructor} - A Lombok annotation to generate a constructor with all fields as parameters.
+ *   {@link NoArgsConstructor} - A Lombok annotation to generate a no-argument constructor.
+ * 
+ * 
+ * Fields:
+ * 
+ *   {@code id} - The unique identifier for the exam, generated automatically.
+ *   {@code name} - The name of the exam.
+ *   {@code date} - The date when the exam was conducted.
+ *   {@code urlImage} - The URL of the image associated with the exam.
+ *   {@code distanceRatio} - The distance ratio measured in the exam.
+ *   {@code perimeterRatio} - The perimeter ratio measured in the exam.
+ *   {@code areaRatio} - The area ratio measured in the exam.
+ *   {@code pacient} - The patient associated with the exam.
+ * 
+ * 
+ * Methods:
+ * 
+ *   {@code toString()} - Returns a string representation of the exam object.
+ * 
+ */
 package co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam;
 
 import java.util.UUID;
