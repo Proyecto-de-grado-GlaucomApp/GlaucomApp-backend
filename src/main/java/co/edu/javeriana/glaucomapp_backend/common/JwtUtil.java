@@ -151,4 +151,27 @@ public boolean isTokenExpired(Date expiration) {
                      .parseSignedClaims(jwt)
                      .getPayload();
         }
+        public String extractIdFromToken(String jwt) {
+            // Trim whitespace from the token
+            jwt = jwt.substring(7).trim();
+            System.out.println("JWT Token on JwtUtil: " + jwt);
+            
+            if (validateTokenMobile(jwt)) {
+                // Extract the ID from the claims
+                System.out.println("Claims on JwtUtil: " + getClaims(jwt));
+                Claims claims = getClaims(jwt);
+                System.out.println("id on JwtUtil: " + claims.get("id", String.class));
+                String id = claims.get("id", String.class);
+                System.out.println("ID on JwtUtil: " + id);
+                
+                // Remove "Bearer " prefix
+                return id;
+            }
+            return null; // Handle invalid token case
+        }
+        
+    
+        private boolean validateTokenMobile(String jwt) {
+            return true;
+        }
 }
