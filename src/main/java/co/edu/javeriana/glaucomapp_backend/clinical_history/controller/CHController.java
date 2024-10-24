@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -48,8 +49,10 @@ public class CHController {
         try {
             pacientService.savePacient(pacient, ophtalIdString);
             return ResponseEntity.ok("Pacient saved successfully");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Register failed: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Registration failed: " + e.getMessage());
+        } catch(Exception e){
+            return ResponseEntity.status(500).body("An unexpected error occurred, try later");
         }
     }
 
@@ -60,7 +63,7 @@ public class CHController {
             List<PacientResponse> pacients = pacientService.getPacientsByOphtal(ophtalIdString, startIndex, endIndex);
             return ResponseEntity.ok(pacients);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(500).body(null);
         }
     }
 
@@ -71,8 +74,10 @@ public class CHController {
             System.out.println("Pacient to delete: " + pacientId);
             pacientService.deletePacient(ophtalIdString, pacientId);
             return ResponseEntity.ok("Pacient deleted successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Deletion failed: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Pacient cannot be deleted: " + e.getMessage());
+            return ResponseEntity.status(500).body("An unexpected error occurred, try later");
         }
     }
 
@@ -83,8 +88,10 @@ public class CHController {
             examService.saveExam(ophtalIdString, examRequest);
             return ResponseEntity.ok("Exam saved succesafully");
             
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Registration failed: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Register failed: ");
+            return ResponseEntity.status(500).body("An unexpected error occurred, try later");
         }
         
     }
@@ -95,8 +102,10 @@ public class CHController {
         try {
             List<ExamsResponse> exams = examService.getExamsByPacient(ophtalIdString, pacientId, startIndex, endIndex);
             return ResponseEntity.ok(exams);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(500).body(null);
         }
     }
 
@@ -106,8 +115,12 @@ public class CHController {
         try {
             examService.deleteExam(ophtalIdString, pacientId,examId);
             return ResponseEntity.ok("Exam deleted successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Deletion failed: " + e.getMessage());
+        }catch(UnauthorizedException e){
+            return ResponseEntity.status(401).body("Deletion failed: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Exam cannot be deleted: " + e.getMessage());
+            return ResponseEntity.status(500).body("An unexpected error occurred, try later");
         }
     }
 
@@ -117,8 +130,14 @@ public class CHController {
         try {
             ExamRes exam = examService.getExamById(ophtalIdString,pacientId, examId);
             return ResponseEntity.ok(exam);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(403).body(null);
+        } catch(UnauthorizedException e){
+            return ResponseEntity.status(401).body(null);
+        }catch (Exception e) {
+            return ResponseEntity.status(500).body(null);
         }
     }
 
