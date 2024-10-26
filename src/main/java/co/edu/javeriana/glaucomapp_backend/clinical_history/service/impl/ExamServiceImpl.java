@@ -124,7 +124,8 @@ public class ExamServiceImpl implements ExamService {
         // Obtain pacient exams
         List<Exam> exams = examRepository.findByPacient_OphthalUser_IdAndPacient_Id(ophtalId, pacientId);
         if (exams.isEmpty()) {
-            throw new IllegalArgumentException("No exams found for the specified patient");
+           //Return empty list if no exams are found
+            return List.of();
         }
 
         // Limit the range of exams to return
@@ -132,7 +133,6 @@ public class ExamServiceImpl implements ExamService {
         List<ExamsResponse> responseList = exams.subList(startIndex, safeEndIndex).stream()
                 .map(e -> new ExamsResponse(e.getId(), e.getName(), e.getDate(), e.getUrlImage()))
                 .collect(Collectors.toList());
-
         return responseList;
     }
 

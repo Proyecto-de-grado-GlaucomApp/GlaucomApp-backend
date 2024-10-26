@@ -167,7 +167,8 @@ public class PacientServiceImpl implements PacientService {
 
         List<Pacient> pacients = pacientRepository.findAllPacientsByOpthalUserId(ophtalId);
         if (pacients.isEmpty()) {
-            throw new IllegalArgumentException("No Pacients found for the specified Ophthalmologist");
+            //Return empty list if no pacients are found
+            return List.of();
         }
 
         // Limit the range of pacients to return
