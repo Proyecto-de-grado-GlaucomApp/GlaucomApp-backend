@@ -53,7 +53,7 @@ public class WebSecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-        @Bean
+    @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(userDetailService);
@@ -103,6 +103,24 @@ public class WebSecurityConfig {
      * @return a SecurityFilterChain for API key authentication
      * @throws Exception if an error occurs during configuration
      */
+
+     @Bean
+     @Order(6)
+     public SecurityFilterChain mobileCHJWTSecurityFilterChain(HttpSecurity http) throws Exception {
+         http
+         .securityMatcher("/mobile/clinical_history")
+         .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+             .authorizeHttpRequests(requests ->
+                 requests
+                     .requestMatchers("/**").authenticated() // Require ADMIN role for /glaucoma-screening/admin/**
+                     .anyRequest().permitAll() // Require authentication for all other requests
+                     )
+             .sessionManagement(session ->
+                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Stateless session management
+             )
+             .csrf(csrf -> csrf.disable()); // Disable CSRF protection for APIs
+         return http.build();
+     }
 
 
      @Bean
