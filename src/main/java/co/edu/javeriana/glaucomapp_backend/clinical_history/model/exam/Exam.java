@@ -63,7 +63,7 @@ public class Exam {
     @Column(name = "date", nullable = false)
     private String date;
 
-    @Column(name = "url_image", nullable = false)
+    @Column(name = "image_id", nullable = false)
     private String urlImage;
 
     @Column(name = "distance_ratio", nullable = false)
