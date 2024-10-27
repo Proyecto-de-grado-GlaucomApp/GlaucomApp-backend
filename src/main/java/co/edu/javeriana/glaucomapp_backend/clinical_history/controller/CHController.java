@@ -7,6 +7,7 @@
  *   POST /mobile/clinical_history/save/pacient - Save a new patient
  *   GET /mobile/clinical_history/get/pacients - Retrieve a list of patients
  *   DELETE /mobile/clinical_history/delete/pacient/{pacientId} - Delete a patient by ID
+ *   GET /mobile/clinical_history/get/pacient - Retrieve a specific patient by ID
  *   POST /mobile/clinical_history/save/exam - Save a new exam
  *   GET /mobile/clinical_history/get/exams - Retrieve a list of exams for a patient
  *   DELETE /mobile/clinical_history/delete/exam/{examId} - Delete an exam by ID
@@ -79,6 +80,7 @@ import co.edu.javeriana.glaucomapp_backend.clinical_history.service.ExamService;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.service.PacientService;
 import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.UnauthorizedException;
+import jakarta.persistence.EntityNotFoundException;
 
 @RequestMapping("/mobile/clinical_history")
 @RestController
@@ -119,6 +121,33 @@ public class CHController {
             return ResponseEntity.status(500).body("An unexpected error occurred, try later");
         }
     }
+
+
+    /**
+     * Retrieves a patient's information based on the provided ID.
+     *
+     * @param token  the authorization token from the request header
+     * @param cedula the patient's ID provided as a request parameter
+     * @return a ResponseEntity containing the patient's information if found, or an error message if not
+     * @throws IllegalArgumentException if there is an error retrieving the patient
+     * @throws EntityNotFoundException if the patient is not found
+     * @throws Exception if an unexpected error occurs
+     */
+    @GetMapping("/get/pacient")
+    public ResponseEntity<?> getPacient(@RequestHeader("Authorization") String token, @RequestParam String cedula) {
+        String ophtalIdString = validateToken(token);
+        try {
+            PacientResponse pacient = pacientService.getPacientById(ophtalIdString, cedula);
+            return ResponseEntity.ok(pacient);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Error retrieving pacient: " + e.getMessage());
+        }catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body("Error finding pacient: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Unexpected error occurred , try later");
+        }
+    }
+
 
     /**
      * Retrieves a list of patients associated with an ophthalmologist.

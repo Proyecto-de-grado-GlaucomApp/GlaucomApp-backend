@@ -16,6 +16,7 @@
  *   {@link #savePacient(PacientRequest, String)} - Saves a new Pacient
  *   {@link #getPacientsByOphtal(String, int, int)} - Retrieves a list of Pacients for a given Ophthalmologist
  *   {@link #deletePacient(String, String)} - Deletes a Pacient by Ophthalmologist ID and Pacient ID
+ *   {@link #getPacientById(String, String)} - Retrieves a Pacient by Ophthalmologist ID and Pacient cedula
  * 
  * 
  * Validation Methods:
@@ -244,6 +245,33 @@ public class PacientServiceImpl implements PacientService {
         if (pacientIdString == null || pacientIdString.isEmpty()) {
             throw new IllegalArgumentException("Empty Pacient Id is not allowed");
         }
+    }
+
+    /**
+     * Retrieves a patient's information based on the provided ophthalmologist ID and patient's cedula.
+     *
+     * @param ophtalIdString the ID of the ophthalmologist as a string
+     * @param cedula the cedula (identification number) of the patient
+     * @return a PacientResponse object containing the patient's ID, name, and cedula
+     * @throws IllegalArgumentException if the ophthalmologist ID is invalid
+     * @throws EntityNotFoundException if the patient is not found
+     */
+    @Override
+    public PacientResponse getPacientById(String ophtalIdString, String cedula) {
+        validateOphtalId(ophtalIdString);
+        
+        UUID ophtalId = UUID.fromString(ophtalIdString);
+
+
+        MyUser ophthalmologist = myUserRepository.findById(ophtalId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid Ophthalmologist ID"));
+
+        Pacient pacient = pacientRepository.findPacientByCedulaAndOphthalUser(cedula, ophthalmologist);
+        if (pacient == null) {
+            throw new EntityNotFoundException("Pacient not found");
+        }
+        return new PacientResponse(pacient.getId(), pacient.getName(), pacient.getCedula());
+
     }
 
 }
