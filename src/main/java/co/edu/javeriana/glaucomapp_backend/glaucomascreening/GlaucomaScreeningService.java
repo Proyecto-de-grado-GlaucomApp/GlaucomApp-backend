@@ -5,14 +5,19 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 
 import javax.imageio.ImageIO;
 
@@ -31,15 +36,39 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetUrlRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+
 @Service
 public class GlaucomaScreeningService {
 
     @Value("${PYTHON_API_URL}") 
     private String pythonApiUrl;
 
+    @Value("${AWS_BUCKET_NAME}")
+    private String bucketName;
+    
+    private final S3Client s3Client;
+
+    private final S3Presigner s3Presigner;
+
+
+    public GlaucomaScreeningService(S3Client s3Client, S3Presigner s3Presigner) {
+            this.s3Client = s3Client;
+            this.s3Presigner = s3Presigner;
+    }
+
+
     public ImageProcessingResultDTO sendImageToApi(MultipartFile file) {
         try {
             byte[] buf = preprocessImage(file);
+
+            System.out.println("En el servicio");
    
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
@@ -47,6 +76,7 @@ public class GlaucomaScreeningService {
     
             HttpEntity<byte[]> requestEntity = new HttpEntity<>(buf, headers);
             ResponseEntity<String> response = restTemplate.postForEntity(pythonApiUrl, requestEntity, String.class);
+            System.out.println("Response: " + response.getStatusCode());
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 int width = ImageIO.read(file.getInputStream()).getWidth();
@@ -70,6 +100,47 @@ public class GlaucomaScreeningService {
     }
     
 
+    public String generateUniqueImageId() {
+        long timestamp = System.currentTimeMillis();
+        String uuid = UUID.randomUUID().toString();
+        return "image_" + timestamp + "_" + uuid + ".png";
+    }
+
+    
+    public String uploadImage(BufferedImage image, String fileName) {
+        System.out.println("Uploading image to S3");
+        try {
+            // Convertir BufferedImage a InputStream
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(image, "png", baos); // Puedes cambiar "png" por el formato deseado
+            InputStream inputStream = new ByteArrayInputStream(baos.toByteArray());
+            System.out.println("InputStream: ");
+
+            // Crear la solicitud para subir el objeto con tipo de contenido
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(fileName)
+                    .contentType("image/png") // Cambia esto según el tipo de imagen
+                    .build();
+            System.out.println("Bucket: " + bucketName);
+            // Subir el objeto
+            s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, baos.size()));
+            
+            System.out.println("File uploaded to S3");
+
+            // Generar la URL del archivo subido
+            String fileUrl = s3Client.utilities().getUrl(GetUrlRequest.builder()
+                    .bucket(bucketName)
+                    .key(fileName)
+                    .build()).toString();
+            
+            System.out.println("File URL: " + fileUrl);
+
+            return fileUrl; // Retorna la URL del archivo
+        } catch (IOException e) {
+            return "Error uploading file: " + e.getMessage();
+        }
+    }
 
     public ImageProcessingResultDTO processResponseDataServer(ResponseEntity<String> response, int width, int height) {
         ImageProcessingResultDTO processresult = new ImageProcessingResultDTO();
@@ -133,13 +204,19 @@ public class GlaucomaScreeningService {
             areas.forEach(area -> areasList.add(area.asDouble()));
             result.setAreas(areasList);
 
-            File outputfile = new File("output.png");
-            ImageIO.write(image, "png", outputfile);
+            String fileName = generateUniqueImageId();
 
+            File outputfile = new File(fileName);
+            ImageIO.write(image, "png", outputfile);
+            System.out.println("Output file: " + outputfile);
+            uploadImage(image, fileName);
+            String url = generatePresignedUrl(fileName);
+            System.out.println("URL: " + url);
             processresult.setImageUrl(uploadImageToCloud(outputfile));
             processresult.setDistanceRatio(result.getDistances().get(1) / result.getDistances().get(0) * 100);
             processresult.setPerimeterRatio(result.getPerimeters().get(1) / result.getPerimeters().get(0)* 100);
             processresult.setAreaRatio(result.getAreas().get(1) / result.getAreas().get(0)* 100);
+            processresult.setImageId(fileName);
 
             return processresult;
         } catch (IOException e) {
@@ -147,6 +224,25 @@ public class GlaucomaScreeningService {
         }
             return processresult;
 
+    }
+
+
+    public String generatePresignedUrl(String objectKey) {
+        // Crear la solicitud para obtener el objeto
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucketName)
+                .key(objectKey)
+                .build();
+
+        // Crear la solicitud para presignar el objeto
+        GetObjectPresignRequest getObjectPresignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofHours(1)) // Duración de la firma
+                .getObjectRequest(getObjectRequest) // Solicitud para el objeto
+                .build();
+
+        // Generar la URL firmada
+        URL presignedUrl = s3Presigner.presignGetObject(getObjectPresignRequest).url();
+        return presignedUrl.toString(); // Retorna la URL como cadena
     }
 
     public void processResponseData(String jsonResponse, MultipartFile file) {
@@ -164,10 +260,13 @@ public class GlaucomaScreeningService {
 
              File outputFile = new File("imagen_modificada.png");
              ImageIO.write(image, "png", outputFile);
+
+
         } catch (JsonProcessingException ex) {
         } catch (IOException ex) {
         }
     }
+
 
 
     private void drawPointsOnImage(BufferedImage image, List<Double> points, Color color) {
@@ -266,6 +365,7 @@ public class GlaucomaScreeningService {
         }
 
         buf.write(pixels);
+        System.out.println("buf:" + buf.size());
 
         return buf.toByteArray();
         

@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
  public class ImageProcessingResultDTO {
 
         String imageUrl;
+        String imageId;
         Double distanceRatio;
         Double perimeterRatio;
         Double areaRatio;
