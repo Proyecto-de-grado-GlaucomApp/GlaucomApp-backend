@@ -138,6 +138,9 @@ public class CHController {
         String ophtalIdString = validateToken(token);
         try {
             PacientResponse pacient = pacientService.getPacientById(ophtalIdString, cedula);
+            if (pacient.PacinetId() == null || pacient.name() == null || pacient.cedula() == null) {
+                return null;
+            }
             return ResponseEntity.ok(pacient);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body("Error retrieving pacient: " + e.getMessage());
