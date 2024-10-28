@@ -206,13 +206,14 @@ public class GlaucomaScreeningService {
 
             String fileName = generateUniqueImageId();
 
-            File outputfile = new File(fileName);
-            ImageIO.write(image, "png", outputfile);
-            System.out.println("Output file: " + outputfile);
+            //File outputfile = new File(fileName);
+            //ImageIO.write(image, "png", outputfile);
+            //System.out.println("Output file: " + outputfile);
             uploadImage(image, fileName);
             String url = generatePresignedUrl(fileName);
             System.out.println("URL: " + url);
-            processresult.setImageUrl(uploadImageToCloud(outputfile));
+            processresult.setImageUrl(generatePresignedUrl(fileName));
+            //processresult.setImageUrl(uploadImageToCloud(outputfile));
             processresult.setDistanceRatio(result.getDistances().get(1) / result.getDistances().get(0) * 100);
             processresult.setPerimeterRatio(result.getPerimeters().get(1) / result.getPerimeters().get(0)* 100);
             processresult.setAreaRatio(result.getAreas().get(1) / result.getAreas().get(0)* 100);
@@ -258,8 +259,8 @@ public class GlaucomaScreeningService {
             drawCoordinatesOnImage(image, nerveCoordinates, Color.GREEN);
             drawCoordinatesOnImage(image, excavationCoordinates, Color.BLUE);
 
-             File outputFile = new File("imagen_modificada.png");
-             ImageIO.write(image, "png", outputFile);
+             //File outputFile = new File("imagen_modificada.png");
+             //ImageIO.write(image, "png", outputFile);
 
 
         } catch (JsonProcessingException ex) {
