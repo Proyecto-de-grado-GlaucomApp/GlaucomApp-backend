@@ -147,15 +147,20 @@ public class WebSecurityConfig {
 
     @Bean
     @Order(4)
-    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+    public SecurityFilterChain authSecurityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
             .securityMatcher("/mobile/auth")
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(registry -> {
-                    registry.requestMatchers("/register/**", "/login").permitAll();
-                    registry.anyRequest().permitAll();
-                })
-                .build();
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(registry -> {
+                // Allow access to registration and login endpoints
+                registry.requestMatchers("/mobile/auth/register/**", "/mobile/auth/login", "/mobile/auth/refresh").permitAll();
+                // Require authentication for logout and refresh endpoints
+                registry.requestMatchers("/mobile/auth/logout").authenticated();
+                // For this filter, deny all other requests by default to limit its scope
+                registry.anyRequest().denyAll();
+            })
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Stateless session
+            .build();
     }
 
     @Bean
