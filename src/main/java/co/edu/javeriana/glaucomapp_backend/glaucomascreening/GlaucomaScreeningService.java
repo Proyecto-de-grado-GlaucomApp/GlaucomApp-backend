@@ -19,6 +19,9 @@ import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 import javax.imageio.ImageIO;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -214,9 +217,10 @@ public class GlaucomaScreeningService {
             System.out.println("URL: " + url);
             processresult.setImageUrl(generatePresignedUrl(fileName));
             //processresult.setImageUrl(uploadImageToCloud(outputfile));
-            processresult.setDistanceRatio(result.getDistances().get(1) / result.getDistances().get(0));
-            processresult.setPerimeterRatio(result.getPerimeters().get(1) / result.getPerimeters().get(0)* 100);
-            processresult.setAreaRatio(result.getAreas().get(1) / result.getAreas().get(0)* 100);
+            processresult.setDistanceRatio((new BigDecimal(result.getDistances().get(1) / result.getDistances().get(0)).setScale(3, RoundingMode.HALF_UP)).doubleValue());
+            processresult.setPerimeterRatio((new BigDecimal(result.getPerimeters().get(1) / result.getPerimeters().get(0)).setScale(3, RoundingMode.HALF_UP)).doubleValue());
+            processresult.setAreaRatio((new BigDecimal(result.getAreas().get(1) / result.getAreas().get(0)).setScale(3, RoundingMode.HALF_UP)).doubleValue());
+            
             processresult.setImageId(fileName);
             processresult.setNeuroretinalRimPerimeter(result.getPerimeters().get(0));
             processresult.setNeuroretinalRimArea(result.getAreas().get(0));
