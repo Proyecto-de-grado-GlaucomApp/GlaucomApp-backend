@@ -268,7 +268,8 @@ public class PacientServiceImpl implements PacientService {
 
         Pacient pacient = pacientRepository.findPacientByCedulaAndOphthalUser(cedula, ophthalmologist);
         if (pacient == null) {
-            throw new EntityNotFoundException("Pacient not found");
+            //Return empty response if pacient is not found
+            return new PacientResponse(null, null, null);
         }
         return new PacientResponse(pacient.getId(), pacient.getName(), pacient.getCedula());
 
