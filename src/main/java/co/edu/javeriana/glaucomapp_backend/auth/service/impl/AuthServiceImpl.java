@@ -42,6 +42,8 @@
 
 package co.edu.javeriana.glaucomapp_backend.auth.service.impl;
 
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -56,6 +58,7 @@ import co.edu.javeriana.glaucomapp_backend.auth.model.LogInForm;
 import co.edu.javeriana.glaucomapp_backend.auth.repository.MyUserRepository;
 import co.edu.javeriana.glaucomapp_backend.auth.service.AuthService;
 import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
+import co.edu.javeriana.glaucomapp_backend.common.exceptions.UnauthorizedException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -76,13 +79,12 @@ public class AuthServiceImpl implements AuthService {
     public AuthServiceImpl(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
     }
-    
 
     @Override
     public MyUser register(MyUser user) {
-        //Review if fields are not empty or null
+        // Review if fields are not empty or null
         if (user.getUsername() == null || user.getUsername().isEmpty() || user.getPassword() == null
-                || user.getPassword().isEmpty() || user.getName() == null || user.getName().isEmpty()){
+                || user.getPassword().isEmpty() || user.getName() == null || user.getName().isEmpty()) {
             throw new IllegalArgumentException("Empty fields are not allowed");
         }
         // Check if the username is already in use
@@ -104,24 +106,20 @@ public class AuthServiceImpl implements AuthService {
             throw new UsernameNotFoundException("Invalid credentials");
         }
 
-        
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-        
         MyUser user = userRepository.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-    
         String token = jwtUtil.generateToken(user);
 
         System.out.println("Token: " + token);
 
-       
         Cookie jwtCookie = new Cookie("jwtToken", token);
         jwtCookie.setHttpOnly(true);
-        jwtCookie.setSecure(true); 
+        jwtCookie.setSecure(true);
         jwtCookie.setPath("/");
-        jwtCookie.setMaxAge(-1); 
+        jwtCookie.setMaxAge(-1);
         // jwtCookie.setSameSite("Strict");
         // Manually set the SameSite attribute
         response.setHeader("Set-Cookie", String.format("%s=%s; HttpOnly; Secure; SameSite=Strict; Max-Age=%d; Path=/",
@@ -131,12 +129,58 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void logout(HttpServletResponse response) {
+    public void refreshToken(String token, HttpServletResponse response) {
+        // Generate the new token
+        String newToken = jwtUtil.refreshToken(token);
+
+        // Delete the expired cookie by setting its max age to 0
+        Cookie expiredCookie = new Cookie("jwtToken", null);
+        expiredCookie.setPath("/");
+        expiredCookie.setHttpOnly(true);
+        expiredCookie.setSecure(true);
+        expiredCookie.setMaxAge(0); // This will tell the browser to delete the cookie
+        response.addCookie(expiredCookie);
+
+        // Set the new token in a cookie
+        Cookie jwtCookie = new Cookie("jwtToken", newToken);
+        jwtCookie.setHttpOnly(true);
+        jwtCookie.setSecure(true);
+        jwtCookie.setPath("/");
+        jwtCookie.setMaxAge(-1); // Session cookie
+
+        // Add SameSite attribute to the Set-Cookie header
+        response.setHeader("Set-Cookie", String.format("%s=%s; HttpOnly; Secure; SameSite=Strict; Path=/",
+                jwtCookie.getName(), jwtCookie.getValue()));
+
+        // Add the new cookie to the response
+        response.addCookie(jwtCookie);
+    }
+
+    @Override
+    public void logout(String authHeader, HttpServletResponse response) {
+        if (jwtUtil.extractIdFromToken(authHeader) == null) {
+            throw new UnauthorizedException("Invalid Token or ophtalmologist ID not found.");
+        }
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Invalid API Key");
+        }
+        if (jwtUtil.isTokenExpired(authHeader)) {
+            // Token is expired error message
+            throw new UnauthorizedException("Token is expired");
+        }
+        if (!jwtUtil.validateToken(authHeader)) {
+            throw new UnauthorizedException("Invalid Token");
+        }
+        // Invalidate the token
+        jwtUtil.invalidateToken(authHeader);
+
+        // Invalidate cookie
         Cookie jwtCookie = new Cookie("jwtToken", null);
         jwtCookie.setPath("/");
         jwtCookie.setHttpOnly(true);
-        jwtCookie.setMaxAge(0); 
+        jwtCookie.setMaxAge(0);
         jwtCookie.setSecure(true);
         response.addCookie(jwtCookie);
     }
+
 }
