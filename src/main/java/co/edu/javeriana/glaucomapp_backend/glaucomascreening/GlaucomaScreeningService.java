@@ -214,10 +214,16 @@ public class GlaucomaScreeningService {
             System.out.println("URL: " + url);
             processresult.setImageUrl(generatePresignedUrl(fileName));
             //processresult.setImageUrl(uploadImageToCloud(outputfile));
-            processresult.setDistanceRatio(result.getDistances().get(1) / result.getDistances().get(0) * 100);
+            processresult.setDistanceRatio(result.getDistances().get(1) / result.getDistances().get(0));
             processresult.setPerimeterRatio(result.getPerimeters().get(1) / result.getPerimeters().get(0)* 100);
             processresult.setAreaRatio(result.getAreas().get(1) / result.getAreas().get(0)* 100);
             processresult.setImageId(fileName);
+            processresult.setNeuroretinalRimPerimeter(result.getPerimeters().get(0));
+            processresult.setNeuroretinalRimArea(result.getAreas().get(0));
+            processresult.setExcavationPerimeter(result.getPerimeters().get(1));
+            processresult.setExcavationArea(result.getAreas().get(1));
+            processresult.setDdlStage(calculateDDLStage(processresult.getDistanceRatio()));
+            processresult.setState(calculateState(processresult.getDdlStage()));
 
             return processresult;
         } catch (IOException e) {
@@ -227,6 +233,31 @@ public class GlaucomaScreeningService {
 
     }
 
+
+    public int calculateDDLStage(Double distanceRatio) {
+        if(distanceRatio >= 0.4) {
+           return 1;
+        } else if(distanceRatio >= 0.3 && distanceRatio < 0.4) {
+            return 2;
+        } else if(distanceRatio >= 0.2 && distanceRatio < 0.3) {
+            return 3;
+        } else if(distanceRatio >= 0.1 && distanceRatio < 0.2) {
+            return 4;
+        } else if(distanceRatio > 0 && distanceRatio < 0.1) {
+            return 5;
+        } else {
+            return 6;
+        }
+    }
+
+    public String calculateState(int ddlsStage){
+        return switch (ddlsStage) {
+            case 1,2,3,4 -> GlaucomaStatus.AT_RISK.getDescription();
+            case 5,6,7 -> GlaucomaStatus.GLAUCOMA_DAMAGE.getDescription();
+            case 8,9,10 -> GlaucomaStatus.GLAUCOMA_DISABILITY.getDescription();
+            default -> "Unknown";
+        };
+    }
 
     public String generatePresignedUrl(String objectKey) {
         // Crear la solicitud para obtener el objeto
