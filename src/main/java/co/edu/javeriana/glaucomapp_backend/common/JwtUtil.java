@@ -32,8 +32,8 @@ public class JwtUtil {
     @Value("${JWT_SECRET_KEY}")
     String secretKey; // Inyectar la clave secreta desde el archivo de propiedades
 
-    private static final long ACCESS_TOKEN_VALIDITY = 1 * 60 * 1000;// 60 * 60 * 1000; // 60 minutes
-    private static final long REFRESH_TOKEN_VALIDITY = 2 * 60 * 1000; // 30 * 24 * 60 * 60 * 1000; // 30 days
+    private static final long ACCESS_TOKEN_VALIDITY =  60 * 60 * 1000; // 60 minutes
+    private static final long REFRESH_TOKEN_VALIDITY = 30 * 24 * 60 * 60 * 1000; // 30 days
 
     private final Set<String> blacklist = new HashSet<>();
 
