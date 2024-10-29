@@ -241,13 +241,13 @@ public class GlaucomaScreeningService {
     public int calculateDDLStage(Double distanceRatio) {
         if(distanceRatio >= 0.4) {
            return 1;
-        } else if(distanceRatio >= 0.3 && distanceRatio < 0.4) {
+        } else if(distanceRatio >= 0.3) {
             return 2;
-        } else if(distanceRatio >= 0.2 && distanceRatio < 0.3) {
+        } else if(distanceRatio >= 0.2) {
             return 3;
-        } else if(distanceRatio >= 0.1 && distanceRatio < 0.2) {
+        } else if(distanceRatio >= 0.1) {
             return 4;
-        } else if(distanceRatio > 0 && distanceRatio < 0.1) {
+        } else if(distanceRatio > 0) {
             return 5;
         } else {
             return 6;
