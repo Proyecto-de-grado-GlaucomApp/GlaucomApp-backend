@@ -163,19 +163,22 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout(String authHeader, HttpServletResponse response) {
+        System.out.println("We are on log out: " + authHeader);
         if (jwtUtil.extractIdFromToken(authHeader) == null) {
             throw new UnauthorizedException("Invalid Token or ophtalmologist ID not found.");
         }
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             throw new IllegalArgumentException("Invalid API Key");
         }
-        if (jwtUtil.isTokenExpired(authHeader)) {
+        if (jwtUtil.isTokenExpired(authHeader.substring(7).trim())) {
             // Token is expired error message
             throw new UnauthorizedException("Token is expired");
         }
-        if (!jwtUtil.validateToken(authHeader)) {
+        System.out.println("after token expired");
+        if (!jwtUtil.validateToken(authHeader.substring(7).trim())) {
             throw new UnauthorizedException("Invalid Token");
         }
+        System.out.println("after validate token");
         // Invalidate the token
         jwtUtil.invalidateToken(authHeader);
 
