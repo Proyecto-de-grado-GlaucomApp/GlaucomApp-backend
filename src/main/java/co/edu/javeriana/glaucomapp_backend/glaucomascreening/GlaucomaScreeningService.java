@@ -39,6 +39,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import co.edu.javeriana.glaucomapp_backend.common.S3.S3Service;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
@@ -53,19 +54,11 @@ public class GlaucomaScreeningService {
     @Value("${PYTHON_API_URL}") 
     private String pythonApiUrl;
 
-    @Value("${AWS_BUCKET_NAME}")
-    private String bucketName;
-    
-    private final S3Client s3Client;
+    private final S3Service s3Service;
 
-    private final S3Presigner s3Presigner;
-
-
-    public GlaucomaScreeningService(S3Client s3Client, S3Presigner s3Presigner) {
-            this.s3Client = s3Client;
-            this.s3Presigner = s3Presigner;
+    public GlaucomaScreeningService(S3Service s3Service) {
+        this.s3Service = s3Service;
     }
-
 
     public ImageProcessingResultDTO sendImageToApi(MultipartFile file) {
         try {
@@ -110,40 +103,7 @@ public class GlaucomaScreeningService {
     }
 
     
-    public String uploadImage(BufferedImage image, String fileName) {
-        System.out.println("Uploading image to S3");
-        try {
-            // Convertir BufferedImage a InputStream
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(image, "png", baos); // Puedes cambiar "png" por el formato deseado
-            InputStream inputStream = new ByteArrayInputStream(baos.toByteArray());
-            System.out.println("InputStream: ");
 
-            // Crear la solicitud para subir el objeto con tipo de contenido
-            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(fileName)
-                    .contentType("image/png") // Cambia esto según el tipo de imagen
-                    .build();
-            System.out.println("Bucket: " + bucketName);
-            // Subir el objeto
-            s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, baos.size()));
-            
-            System.out.println("File uploaded to S3");
-
-            // Generar la URL del archivo subido
-            String fileUrl = s3Client.utilities().getUrl(GetUrlRequest.builder()
-                    .bucket(bucketName)
-                    .key(fileName)
-                    .build()).toString();
-            
-            System.out.println("File URL: " + fileUrl);
-
-            return fileUrl; // Retorna la URL del archivo
-        } catch (IOException e) {
-            return "Error uploading file: " + e.getMessage();
-        }
-    }
 
     public ImageProcessingResultDTO processResponseDataServer(ResponseEntity<String> response, int width, int height) {
         ImageProcessingResultDTO processresult = new ImageProcessingResultDTO();
@@ -212,10 +172,10 @@ public class GlaucomaScreeningService {
             //File outputfile = new File(fileName);
             //ImageIO.write(image, "png", outputfile);
             //System.out.println("Output file: " + outputfile);
-            uploadImage(image, fileName);
-            String url = generatePresignedUrl(fileName);
+            s3Service.uploadImage(image, fileName);
+            String url = s3Service.generatePresignedUrl(fileName);
             System.out.println("URL: " + url);
-            processresult.setImageUrl(generatePresignedUrl(fileName));
+            processresult.setImageUrl(s3Service.generatePresignedUrl(fileName));
             //processresult.setImageUrl(uploadImageToCloud(outputfile));
             processresult.setDistanceRatio((new BigDecimal(result.getDistances().get(1) / result.getDistances().get(0)).setScale(3, RoundingMode.HALF_UP)).doubleValue());
             processresult.setPerimeterRatio((new BigDecimal(result.getPerimeters().get(1) / result.getPerimeters().get(0)).setScale(3, RoundingMode.HALF_UP)).doubleValue());
@@ -263,23 +223,7 @@ public class GlaucomaScreeningService {
         };
     }
 
-    public String generatePresignedUrl(String objectKey) {
-        // Crear la solicitud para obtener el objeto
-        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(bucketName)
-                .key(objectKey)
-                .build();
 
-        // Crear la solicitud para presignar el objeto
-        GetObjectPresignRequest getObjectPresignRequest = GetObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofHours(1)) // Duración de la firma
-                .getObjectRequest(getObjectRequest) // Solicitud para el objeto
-                .build();
-
-        // Generar la URL firmada
-        URL presignedUrl = s3Presigner.presignGetObject(getObjectPresignRequest).url();
-        return presignedUrl.toString(); // Retorna la URL como cadena
-    }
 
     public void processResponseData(String jsonResponse, MultipartFile file) {
         ObjectMapper objectMapper = new ObjectMapper();

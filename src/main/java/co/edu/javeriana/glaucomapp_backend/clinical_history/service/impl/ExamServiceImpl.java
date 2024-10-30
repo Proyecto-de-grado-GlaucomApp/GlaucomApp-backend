@@ -52,19 +52,29 @@ import co.edu.javeriana.glaucomapp_backend.clinical_history.model.pacient.Pacien
 import co.edu.javeriana.glaucomapp_backend.clinical_history.repository.ExamRepository;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.repository.PacientRepository;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.service.ExamService;
+import co.edu.javeriana.glaucomapp_backend.common.S3.S3Service;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
 @Service
 public class ExamServiceImpl implements ExamService {
 
-    @Autowired
-    private ExamRepository examRepository;
+    
+    private final ExamRepository examRepository;
+    private final S3Service s3Service;
 
-    @Autowired
-    private MyUserRepository myUserRepository;
+    
+    //private final MyUserRepository myUserRepository;
 
-    @Autowired
-    private PacientRepository pacientRepository;
+    
+    private final PacientRepository pacientRepository;
+
+    public ExamServiceImpl(ExamRepository examRepository,
+            PacientRepository pacientRepository, S3Service s3Service) {
+        this.examRepository = examRepository;
+        this.pacientRepository = pacientRepository;
+        this.s3Service = s3Service;
+    }
 
     /**
      * Saves an exam for a given ophthalmologist and patient.
@@ -77,12 +87,14 @@ public class ExamServiceImpl implements ExamService {
     public void saveExam(String ophtalIdString, ExamRequest examRequest) {
         UUID ophtalId = UUID.fromString(ophtalIdString);
 
+        /*
         // Verify that the ophtalmologist is correct
         MyUser ophthalmologist = myUserRepository.findById(ophtalId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Ophthalmologist ID"));
+ */
 
         // Find ophtal pacient
-        Pacient pacient = pacientRepository.findPacientByCedulaAndOphthalUser(examRequest.cedula(), ophthalmologist);
+        Pacient pacient = pacientRepository.findPacientByCedulaAndDoctorId(examRequest.cedula(), ophtalId);
         if (pacient == null) {
             throw new IllegalArgumentException("Patient not found for the given cedula");
         }
@@ -118,11 +130,13 @@ public class ExamServiceImpl implements ExamService {
         UUID ophtalId = UUID.fromString(ophtalIdString);
         UUID pacientId = UUID.fromString(pacientIdString);
 
+        /*
         // Verify if the ophtal is valid
         myUserRepository.findById(ophtalId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Ophthalmologist ID"));
-        // Obtain pacient exams
-        List<Exam> exams = examRepository.findByPacient_OphthalUser_IdAndPacient_Id(ophtalId, pacientId);
+         */
+                // Obtain pacient exams
+        List<Exam> exams = examRepository.findByPacient_DoctorIdAndPacient_Id(ophtalId, pacientId);
         if (exams.isEmpty()) {
            //Return empty list if no exams are found
             return List.of();
@@ -131,7 +145,7 @@ public class ExamServiceImpl implements ExamService {
         // Limit the range of exams to return
         int safeEndIndex = Math.min(endIndex, exams.size());
         List<ExamsResponse> responseList = exams.subList(startIndex, safeEndIndex).stream()
-                .map(e -> new ExamsResponse(e.getId(), e.getName(), e.getDate(), e.getUrlImage()))
+                .map(e -> new ExamsResponse(e.getId(), e.getName(), e.getDate(), s3Service.generatePresignedUrl(e.getUrlImage())))
                 .collect(Collectors.toList());
         return responseList;
     }
@@ -186,7 +200,7 @@ public class ExamServiceImpl implements ExamService {
                 exam.getId(),
                 exam.getName(),
                 exam.getDate(),
-                exam.getUrlImage(),
+                s3Service.generatePresignedUrl(exam.getUrlImage()),
                 exam.getDistanceRatio(),
                 exam.getPerimeterRatio(),
                 exam.getAreaRatio());
@@ -216,7 +230,7 @@ public class ExamServiceImpl implements ExamService {
         Pacient pacient = exam.getPacient();
 
         if (pacient == null || !pacient.getId().equals(pacientId)
-                || !pacient.getOphthalUser().getId().equals(ophtalId)) {
+                || !pacient.getDoctorId().equals(ophtalId)) {
             throw new AccessDeniedException("Unauthorized access to the exam");
         }
 

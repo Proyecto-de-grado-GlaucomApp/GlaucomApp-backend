@@ -90,13 +90,13 @@ public class CHController {
 
     private final ExamService examService;
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    
+    private final JwtUtil jwtUtil;
 
-    @Autowired
-    public CHController(PacientService pacientService, ExamService examService) {
+    public CHController(PacientService pacientService, ExamService examService, JwtUtil jwtUtil) {
         this.pacientService = pacientService;
         this.examService = examService;
+        this.jwtUtil = jwtUtil;
     }
 
     /**

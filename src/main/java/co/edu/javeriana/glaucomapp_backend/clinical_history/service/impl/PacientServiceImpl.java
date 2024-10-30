@@ -68,14 +68,19 @@ import jakarta.transaction.Transactional;
 @Service
 public class PacientServiceImpl implements PacientService {
 
-    @Autowired
-    private PacientRepository pacientRepository;
+    private final PacientRepository pacientRepository;
 
-    @Autowired
-    private MyUserRepository myUserRepository;
+    
+    //private final MyUserRepository myUserRepository;
 
-    @Autowired
-    private ExamRepository examRepository;
+    
+    private final ExamRepository examRepository;
+
+    public PacientServiceImpl(PacientRepository pacientRepository, 
+            ExamRepository examRepository) {
+        this.pacientRepository = pacientRepository;
+        this.examRepository = examRepository;
+    }
 
     /**
      * Deletes a pacient by their UUID.
@@ -112,18 +117,21 @@ public class PacientServiceImpl implements PacientService {
         validatePacientRequest(pacientRequest);
         UUID ophtalId = UUID.fromString(ophtalIdString);
 
+
+        /* Definir un evento
         MyUser ophthalmologist = myUserRepository.findById(ophtalId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Ophthalmologist ID"));
+ */
 
         // Check if pacient already exists
-        if (pacientRepository.findPacientByCedulaAndOphthalUser(pacientRequest.cedula(), ophthalmologist) != null) {
+        if (pacientRepository.findPacientByCedulaAndDoctorId(pacientRequest.cedula(), ophtalId) != null) {
             throw new IllegalArgumentException("Cedula already exists");
         }
 
         Pacient newPacient = Pacient.builder()
                 .cedula(pacientRequest.cedula())
                 .name(pacientRequest.name())
-                .ophthalUser(ophthalmologist)
+                .doctorId(ophtalId)
                 .build();
 
         pacientRepository.save(newPacient);
@@ -163,10 +171,12 @@ public class PacientServiceImpl implements PacientService {
         validateOphtalId(ophtalIdString);
         UUID ophtalId = UUID.fromString(ophtalIdString);
 
+        /*
         myUserRepository.findById(ophtalId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Ophthalmologist ID"));
+ */
 
-        List<Pacient> pacients = pacientRepository.findAllPacientsByOpthalUserId(ophtalId);
+        List<Pacient> pacients = pacientRepository.findAllPacientsByDoctorId(ophtalId);
         if (pacients.isEmpty()) {
             //Return empty list if no pacients are found
             return List.of();
@@ -219,14 +229,16 @@ public class PacientServiceImpl implements PacientService {
         UUID ophtalId = UUID.fromString(ophtalIdString);
         UUID pacientId = UUID.fromString(pacientIdString);
 
+        /*
         myUserRepository.findById(ophtalId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Ophthalmologist ID"));
+ */
 
         Pacient pacient = pacientRepository.findById(pacientId)
                 .orElseThrow(() -> new IllegalArgumentException("Pacient not found"));
 
         // Validate that the pacient is associated with the ophthalmologist
-        if (!pacient.getOphthalUser().getId().equals(ophtalId)) {
+        if (!pacient.getDoctorId().equals(ophtalId)) {
             throw new AccessDeniedException("Unauthorized access to the pacient");
         }
 
@@ -262,11 +274,13 @@ public class PacientServiceImpl implements PacientService {
         
         UUID ophtalId = UUID.fromString(ophtalIdString);
 
-
+        // Definir evento
+/*
         MyUser ophthalmologist = myUserRepository.findById(ophtalId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Ophthalmologist ID"));
+ */
 
-        Pacient pacient = pacientRepository.findPacientByCedulaAndOphthalUser(cedula, ophthalmologist);
+        Pacient pacient = pacientRepository.findPacientByCedulaAndDoctorId(cedula, ophtalId);
         if (pacient == null) {
             //Return empty response if pacient is not found
             return new PacientResponse(null, null, null);

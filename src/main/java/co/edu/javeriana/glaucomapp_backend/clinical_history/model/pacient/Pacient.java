@@ -77,12 +77,11 @@ public class Pacient {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @ManyToOne
-    @JoinColumn(name = "ophtal_id", nullable = false)
-    private MyUser ophthalUser;
+    @Column(name = "ophtal_id", nullable = false)
+    private UUID doctorId;
 
     @OneToMany(mappedBy = "pacient", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Exam> Exams;
+    private List<Exam> exams;
 
     @Override
     public String toString() {

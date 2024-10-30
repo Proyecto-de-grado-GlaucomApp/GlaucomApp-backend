@@ -1,4 +1,4 @@
-package co.edu.javeriana.glaucomapp_backend.glaucomascreening;
+package co.edu.javeriana.glaucomapp_backend.common.S3;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

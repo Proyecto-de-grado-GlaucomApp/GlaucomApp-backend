@@ -42,15 +42,13 @@ import java.util.UUID;
 @Repository
 public interface PacientRepository extends JpaRepository<Pacient, UUID> {
 
-    Pacient findPacientByCedulaAndOphthalUser(String cedula, MyUser ophthalUser);
+    Pacient findPacientByCedulaAndDoctorId(String cedula, UUID doctorId);
 
-    @Query("SELECT p FROM Pacient p WHERE p.ophthalUser.id = :ophtalId")
-    List<Pacient> findAllPacientsByOpthalUserId(@Param("ophtalId") UUID ophtalId);
+    @Query("SELECT p FROM Pacient p WHERE p.doctorId = :doctorId")
+    List<Pacient> findAllPacientsByDoctorId(@Param("doctorId") UUID doctorId);
 
     @Modifying
-    @Query("DELETE FROM Pacient p WHERE p.ophthalUser.id = :ophtalId AND p.id = :pacientId")
-    void deletePacientByOphtalID(@Param("ophtalId") UUID ophtalId, @Param("pacientId")UUID pacientId);
-
-
+    @Query("DELETE FROM Pacient p WHERE p.doctorId = :doctorId AND p.id = :pacientId")
+    void deletePacientByDoctorId(@Param("doctorId") UUID doctorId, @Param("pacientId") UUID pacientId);
 
 }

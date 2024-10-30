@@ -27,7 +27,6 @@ import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.Exam;
 @Repository
 public interface ExamRepository extends JpaRepository<Exam, UUID>{
 
-    List<Exam> findByPacient_OphthalUser_IdAndPacient_Id(UUID ophtalId, UUID pacientId);
-
+    List<Exam> findByPacient_DoctorIdAndPacient_Id(UUID doctorId, UUID pacientId);
 
 }
