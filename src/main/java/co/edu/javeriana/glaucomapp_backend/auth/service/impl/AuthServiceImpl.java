@@ -65,19 +65,24 @@ import jakarta.servlet.http.HttpServletResponse;
 @Service
 public class AuthServiceImpl implements AuthService {
 
-    @Autowired
-    private MyUserRepository userRepository;
+    
+    private final MyUserRepository userRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    
+    private final AuthenticationManager authenticationManager;
 
     private final JwtUtil jwtUtil;
 
-    public AuthServiceImpl(JwtUtil jwtUtil) {
+    public AuthServiceImpl(JwtUtil jwtUtil, MyUserRepository userRepository, PasswordEncoder passwordEncoder,
+            AuthenticationManager authenticationManager) {
         this.jwtUtil = jwtUtil;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+
     }
 
     @Override

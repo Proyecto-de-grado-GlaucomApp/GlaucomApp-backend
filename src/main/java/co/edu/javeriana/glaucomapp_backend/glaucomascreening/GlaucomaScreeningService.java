@@ -5,22 +5,17 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 import javax.imageio.ImageIO;
 
@@ -35,18 +30,13 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import co.edu.javeriana.glaucomapp_backend.common.S3.S3Service;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetUrlRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 @Service
 public class GlaucomaScreeningService {
@@ -107,23 +97,32 @@ public class GlaucomaScreeningService {
 
     public ImageProcessingResultDTO processResponseDataServer(ResponseEntity<String> response, int width, int height) {
         ImageProcessingResultDTO processresult = new ImageProcessingResultDTO();
-        ObjectMapper objectMapper = new ObjectMapper();
-
-
+    
+        // Configurar el ObjectMapper con las restricciones de longitud
+        StreamReadConstraints constraints = StreamReadConstraints.builder()
+                .maxStringLength(100_000_000) 
+                .build();
+    
+        JsonFactory jsonFactory = JsonFactory.builder()
+                .streamReadConstraints(constraints)
+                .build();
+    
+        ObjectMapper objectMapper = new ObjectMapper(jsonFactory);
+    
         ServerResultDTO result = new ServerResultDTO();
-
-            try {
-                JsonNode jsonNode = objectMapper.readTree(response.getBody());
-
-                JsonNode bitmap = jsonNode.path("image").path("bitmap");
-                JsonNode coordinates = jsonNode.path("coordinates");
-                System.out.println("Coordinates: " + coordinates);
-                JsonNode distances = jsonNode.path("distances");
-                System.out.println("Distances: " + distances);
-                JsonNode perimeters = jsonNode.path("perimeters");
-                System.out.println("Perimeters: " + perimeters);
-                JsonNode areas = jsonNode.path("areas");
-                System.out.println("Areas: " + areas);
+    
+        try {
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+    
+            JsonNode bitmap = jsonNode.path("image").path("bitmap");
+            JsonNode coordinates = jsonNode.path("coordinates");
+            System.out.println("Coordinates: " + coordinates);
+            JsonNode distances = jsonNode.path("distances");
+            System.out.println("Distances: " + distances);
+            JsonNode perimeters = jsonNode.path("perimeters");
+            System.out.println("Perimeters: " + perimeters);
+            JsonNode areas = jsonNode.path("areas");
+            System.out.println("Areas: " + areas);
 
             String base64Image = bitmap.asText();
             Base64.getDecoder().decode(base64Image);
