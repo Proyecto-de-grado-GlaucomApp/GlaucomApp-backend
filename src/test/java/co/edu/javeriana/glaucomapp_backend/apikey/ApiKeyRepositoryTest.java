@@ -1,31 +1,29 @@
 package co.edu.javeriana.glaucomapp_backend.apikey;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
-import org.mockito.MockitoAnnotations;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
-
-
-@DataJpaTest
+@ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
 public class ApiKeyRepositoryTest {
 
     @Mock
     private ApiKeyRepository apiKeyRepository;
 
-
     private ApiKey apiKey;
-
 
     @BeforeEach
     public void setUp() {
@@ -34,7 +32,6 @@ public class ApiKeyRepositoryTest {
         apiKey.setApiKey("testApiKey");
         apiKey.setStatus(ApiKeyStatus.ACTIVE);
         apiKey.setUserApiId(1L);
-
     }
 
     @Test
