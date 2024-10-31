@@ -85,6 +85,7 @@ public class ExamServiceImpl implements ExamService {
      */
     @Override
     public void saveExam(String ophtalIdString, ExamRequest examRequest) {
+        System.out.println("ophtalIdString on SAVE EXAM: " + ophtalIdString);
         UUID ophtalId = UUID.fromString(ophtalIdString);
 
         /*
@@ -94,7 +95,9 @@ public class ExamServiceImpl implements ExamService {
  */
 
         // Find ophtal pacient
+        System.out.println("we a re goig to get pacient by cedula and doctor Id: " + examRequest.cedula());
         Pacient pacient = pacientRepository.findPacientByCedulaAndDoctorId(examRequest.cedula(), ophtalId);
+        System.out.println("PACIENT: " + pacient);
         if (pacient == null) {
             throw new IllegalArgumentException("Patient not found for the given cedula");
         }
@@ -107,11 +110,19 @@ public class ExamServiceImpl implements ExamService {
                 .distanceRatio(examRequest.distanceRatio())
                 .perimeterRatio(examRequest.perimeterRatio())
                 .areaRatio(examRequest.areaRatio())
+                .neuroretinalRimPerimeter(examRequest.neuroretinalRimPerimeter())
+                .neuroretinalRimArea(examRequest.neuroretinalRimArea())
+                .excavationPerimeter(examRequest.excavationPerimeter())
+                .excavationArea(examRequest.excavationArea())
+                .state(examRequest.state())
+                .ddlStage(examRequest.ddlStage())
                 .pacient(pacient)
                 .build();
 
         // Save exam
+        System.out.println("going to save nre exam: " + newExam);
         examRepository.save(newExam);
+        System.out.println("exam saved");
     }
 
     /**
@@ -187,7 +198,6 @@ public class ExamServiceImpl implements ExamService {
         UUID ophtalId = UUID.fromString(ophtalIdString);
         UUID pacientId = UUID.fromString(pacientIdString);
         UUID examId = UUID.fromString(examIdString);
-
         // Verify the relaction between exam, pacient and ophtal are correct
         verifyExam(ophtalId, pacientId, examId);
 
@@ -203,7 +213,14 @@ public class ExamServiceImpl implements ExamService {
                 s3Service.generatePresignedUrl(exam.getUrlImage()),
                 exam.getDistanceRatio(),
                 exam.getPerimeterRatio(),
-                exam.getAreaRatio());
+                exam.getAreaRatio(),
+                exam.getNeuroretinalRimPerimeter(),
+                exam.getNeuroretinalRimArea(),
+                exam.getExcavationPerimeter(),
+                exam.getExcavationArea(),
+                exam.getState(),
+                exam.getDdlStage()
+                );
     }
 
     /**
