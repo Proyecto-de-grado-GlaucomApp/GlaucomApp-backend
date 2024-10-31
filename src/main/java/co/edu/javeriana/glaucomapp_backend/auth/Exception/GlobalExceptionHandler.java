@@ -34,6 +34,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
+        if (e.getMessage().contains("Username already in use")) {
+            return ResponseEntity.status(409).body("Error: " + e.getMessage());
+        }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
     }
 
