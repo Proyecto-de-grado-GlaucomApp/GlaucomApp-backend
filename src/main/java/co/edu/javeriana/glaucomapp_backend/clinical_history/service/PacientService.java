@@ -21,4 +21,6 @@ public interface PacientService {
     public List<PacientResponse> getPacientsByOphtal(String ophtalIdString, int startIndex, int endIndex);
 
     public void deletePacient(String ophtalIdString, String pacientId);
+
+    public PacientResponse getPacientById(String ophtalIdString, String cedula);
 }

@@ -75,6 +75,24 @@ public class Exam {
     @Column(name = "area_ratio", nullable = false)
     private double areaRatio;
 
+    @Column(name = "neuroretinal_rim_perimeter", nullable = false)
+    private Double neuroretinalRimPerimeter;
+
+    @Column(name = "neuroretinal_rim_area", nullable = false)
+    private Double neuroretinalRimArea;
+
+    @Column(name = "cup_perimeter", nullable = false)
+    private Double excavationPerimeter;
+
+    @Column(name = "cup_area", nullable = false)
+    private Double excavationArea;
+
+    @Column(name = "state", nullable = false)
+    private String state;
+
+    @Column(name = "ddl_stage", nullable = false)
+    private int ddlStage;
+
     @ManyToOne
     @JoinColumn(name = "pacient_id", nullable = false)
     private Pacient pacient;
@@ -82,7 +100,10 @@ public class Exam {
     @Override
     public String toString() {
         return "Exam [id=" + id + ", name=" + name + ", date=" + date + ", urlImage=" + urlImage + ", distanceRatio="
-                + distanceRatio + ", perimeterRatio=" + perimeterRatio + ", areaRatio=" + areaRatio + "]";
+                + distanceRatio + ", perimeterRatio=" + perimeterRatio + ", areaRatio=" + areaRatio + ", neuroretinalRimPerimeter=" 
+                + neuroretinalRimPerimeter + ", neuroretinalRimArea=" + neuroretinalRimArea + ", excavationPerimeter=" + excavationPerimeter 
+                + ", excavationArea=" + excavationArea + ", state=" + state + ", ddlStage=" + ddlStage + "]";
     }
+
 
 }

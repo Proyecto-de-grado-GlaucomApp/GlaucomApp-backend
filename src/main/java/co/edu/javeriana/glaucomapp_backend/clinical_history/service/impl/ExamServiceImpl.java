@@ -38,12 +38,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
-import co.edu.javeriana.glaucomapp_backend.auth.exposed.MyUser;
-import co.edu.javeriana.glaucomapp_backend.auth.repository.MyUserRepository;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.Exam;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.ExamRequest;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.ExamRes;
@@ -52,19 +49,29 @@ import co.edu.javeriana.glaucomapp_backend.clinical_history.model.pacient.Pacien
 import co.edu.javeriana.glaucomapp_backend.clinical_history.repository.ExamRepository;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.repository.PacientRepository;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.service.ExamService;
+import co.edu.javeriana.glaucomapp_backend.common.S3.S3Service;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
 @Service
 public class ExamServiceImpl implements ExamService {
 
-    @Autowired
-    private ExamRepository examRepository;
+    
+    private final ExamRepository examRepository;
+    private final S3Service s3Service;
 
-    @Autowired
-    private MyUserRepository myUserRepository;
+    
+    //private final MyUserRepository myUserRepository;
 
-    @Autowired
-    private PacientRepository pacientRepository;
+    
+    private final PacientRepository pacientRepository;
+
+    public ExamServiceImpl(ExamRepository examRepository,
+            PacientRepository pacientRepository, S3Service s3Service) {
+        this.examRepository = examRepository;
+        this.pacientRepository = pacientRepository;
+        this.s3Service = s3Service;
+    }
 
     /**
      * Saves an exam for a given ophthalmologist and patient.
@@ -75,14 +82,19 @@ public class ExamServiceImpl implements ExamService {
      */
     @Override
     public void saveExam(String ophtalIdString, ExamRequest examRequest) {
+        System.out.println("ophtalIdString on SAVE EXAM: " + ophtalIdString);
         UUID ophtalId = UUID.fromString(ophtalIdString);
 
+        /*
         // Verify that the ophtalmologist is correct
         MyUser ophthalmologist = myUserRepository.findById(ophtalId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Ophthalmologist ID"));
+ */
 
         // Find ophtal pacient
-        Pacient pacient = pacientRepository.findPacientByCedulaAndOphthalUser(examRequest.cedula(), ophthalmologist);
+        System.out.println("we a re goig to get pacient by cedula and doctor Id: " + examRequest.cedula());
+        Pacient pacient = pacientRepository.findPacientByCedulaAndDoctorId(examRequest.cedula(), ophtalId);
+        System.out.println("PACIENT: " + pacient);
         if (pacient == null) {
             throw new IllegalArgumentException("Patient not found for the given cedula");
         }
@@ -95,11 +107,19 @@ public class ExamServiceImpl implements ExamService {
                 .distanceRatio(examRequest.distanceRatio())
                 .perimeterRatio(examRequest.perimeterRatio())
                 .areaRatio(examRequest.areaRatio())
+                .neuroretinalRimPerimeter(examRequest.neuroretinalRimPerimeter())
+                .neuroretinalRimArea(examRequest.neuroretinalRimArea())
+                .excavationPerimeter(examRequest.excavationPerimeter())
+                .excavationArea(examRequest.excavationArea())
+                .state(examRequest.state())
+                .ddlStage(examRequest.ddlStage())
                 .pacient(pacient)
                 .build();
 
         // Save exam
+        System.out.println("going to save nre exam: " + newExam);
         examRepository.save(newExam);
+        System.out.println("exam saved");
     }
 
     /**
@@ -118,11 +138,13 @@ public class ExamServiceImpl implements ExamService {
         UUID ophtalId = UUID.fromString(ophtalIdString);
         UUID pacientId = UUID.fromString(pacientIdString);
 
+        /*
         // Verify if the ophtal is valid
         myUserRepository.findById(ophtalId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Ophthalmologist ID"));
-        // Obtain pacient exams
-        List<Exam> exams = examRepository.findByPacient_OphthalUser_IdAndPacient_Id(ophtalId, pacientId);
+         */
+                // Obtain pacient exams
+        List<Exam> exams = examRepository.findByPacient_DoctorIdAndPacient_Id(ophtalId, pacientId);
         if (exams.isEmpty()) {
            //Return empty list if no exams are found
             return List.of();
@@ -131,7 +153,7 @@ public class ExamServiceImpl implements ExamService {
         // Limit the range of exams to return
         int safeEndIndex = Math.min(endIndex, exams.size());
         List<ExamsResponse> responseList = exams.subList(startIndex, safeEndIndex).stream()
-                .map(e -> new ExamsResponse(e.getId(), e.getName(), e.getDate(), e.getUrlImage()))
+                .map(e -> new ExamsResponse(e.getId(), e.getName(), e.getDate(), s3Service.generatePresignedUrl(e.getUrlImage())))
                 .collect(Collectors.toList());
         return responseList;
     }
@@ -154,6 +176,9 @@ public class ExamServiceImpl implements ExamService {
 
         // Verify the relaction between exam, pacient and ophtal are correct
         verifyExam(ophtalId, pacientId, examId);
+        
+        s3Service.deleteImage(examRepository.findById(examId).get().getUrlImage());
+        System.out.println("Image deleted");
 
         // Delete exam
         examRepository.deleteById(examId);
@@ -173,7 +198,6 @@ public class ExamServiceImpl implements ExamService {
         UUID ophtalId = UUID.fromString(ophtalIdString);
         UUID pacientId = UUID.fromString(pacientIdString);
         UUID examId = UUID.fromString(examIdString);
-
         // Verify the relaction between exam, pacient and ophtal are correct
         verifyExam(ophtalId, pacientId, examId);
 
@@ -186,10 +210,17 @@ public class ExamServiceImpl implements ExamService {
                 exam.getId(),
                 exam.getName(),
                 exam.getDate(),
-                exam.getUrlImage(),
+                s3Service.generatePresignedUrl(exam.getUrlImage()),
                 exam.getDistanceRatio(),
                 exam.getPerimeterRatio(),
-                exam.getAreaRatio());
+                exam.getAreaRatio(),
+                exam.getNeuroretinalRimPerimeter(),
+                exam.getNeuroretinalRimArea(),
+                exam.getExcavationPerimeter(),
+                exam.getExcavationArea(),
+                exam.getState(),
+                exam.getDdlStage()
+                );
     }
 
     /**
@@ -216,7 +247,7 @@ public class ExamServiceImpl implements ExamService {
         Pacient pacient = exam.getPacient();
 
         if (pacient == null || !pacient.getId().equals(pacientId)
-                || !pacient.getOphthalUser().getId().equals(ophtalId)) {
+                || !pacient.getDoctorId().equals(ophtalId)) {
             throw new AccessDeniedException("Unauthorized access to the exam");
         }
 

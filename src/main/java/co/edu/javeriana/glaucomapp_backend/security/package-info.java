@@ -11,4 +11,5 @@
  * It allows dependencies only from the API Key module's exposed interface.
  * </p>
  */
+@org.springframework.modulith.NamedInterface("exposed")
 package co.edu.javeriana.glaucomapp_backend.security;

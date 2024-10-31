@@ -8,11 +8,14 @@ import java.awt.image.DataBufferByte;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 
 import javax.imageio.ImageIO;
 
@@ -27,9 +30,13 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import co.edu.javeriana.glaucomapp_backend.common.S3.S3Service;
 
 @Service
 public class GlaucomaScreeningService {
@@ -37,9 +44,17 @@ public class GlaucomaScreeningService {
     @Value("${PYTHON_API_URL}") 
     private String pythonApiUrl;
 
+    private final S3Service s3Service;
+
+    public GlaucomaScreeningService(S3Service s3Service) {
+        this.s3Service = s3Service;
+    }
+
     public ImageProcessingResultDTO sendImageToApi(MultipartFile file) {
         try {
             byte[] buf = preprocessImage(file);
+
+            System.out.println("En el servicio");
    
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
@@ -47,6 +62,7 @@ public class GlaucomaScreeningService {
     
             HttpEntity<byte[]> requestEntity = new HttpEntity<>(buf, headers);
             ResponseEntity<String> response = restTemplate.postForEntity(pythonApiUrl, requestEntity, String.class);
+            System.out.println("Response: " + response.getStatusCode());
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 int width = ImageIO.read(file.getInputStream()).getWidth();
@@ -70,26 +86,43 @@ public class GlaucomaScreeningService {
     }
     
 
+    public String generateUniqueImageId() {
+        long timestamp = System.currentTimeMillis();
+        String uuid = UUID.randomUUID().toString();
+        return "image_" + timestamp + "_" + uuid + ".png";
+    }
+
+    
+
 
     public ImageProcessingResultDTO processResponseDataServer(ResponseEntity<String> response, int width, int height) {
         ImageProcessingResultDTO processresult = new ImageProcessingResultDTO();
-        ObjectMapper objectMapper = new ObjectMapper();
-
-
+    
+        // Configurar el ObjectMapper con las restricciones de longitud
+        StreamReadConstraints constraints = StreamReadConstraints.builder()
+                .maxStringLength(100_000_000) 
+                .build();
+    
+        JsonFactory jsonFactory = JsonFactory.builder()
+                .streamReadConstraints(constraints)
+                .build();
+    
+        ObjectMapper objectMapper = new ObjectMapper(jsonFactory);
+    
         ServerResultDTO result = new ServerResultDTO();
-
-            try {
-                JsonNode jsonNode = objectMapper.readTree(response.getBody());
-
-                JsonNode bitmap = jsonNode.path("image").path("bitmap");
-                JsonNode coordinates = jsonNode.path("coordinates");
-                System.out.println("Coordinates: " + coordinates);
-                JsonNode distances = jsonNode.path("distances");
-                System.out.println("Distances: " + distances);
-                JsonNode perimeters = jsonNode.path("perimeters");
-                System.out.println("Perimeters: " + perimeters);
-                JsonNode areas = jsonNode.path("areas");
-                System.out.println("Areas: " + areas);
+    
+        try {
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+    
+            JsonNode bitmap = jsonNode.path("image").path("bitmap");
+            JsonNode coordinates = jsonNode.path("coordinates");
+            System.out.println("Coordinates: " + coordinates);
+            JsonNode distances = jsonNode.path("distances");
+            System.out.println("Distances: " + distances);
+            JsonNode perimeters = jsonNode.path("perimeters");
+            System.out.println("Perimeters: " + perimeters);
+            JsonNode areas = jsonNode.path("areas");
+            System.out.println("Areas: " + areas);
 
             String base64Image = bitmap.asText();
             Base64.getDecoder().decode(base64Image);
@@ -133,13 +166,27 @@ public class GlaucomaScreeningService {
             areas.forEach(area -> areasList.add(area.asDouble()));
             result.setAreas(areasList);
 
-            File outputfile = new File("output.png");
-            ImageIO.write(image, "png", outputfile);
+            String fileName = generateUniqueImageId();
 
-            processresult.setImageUrl(uploadImageToCloud(outputfile));
-            processresult.setDistanceRatio(result.getDistances().get(1) / result.getDistances().get(0) * 100);
-            processresult.setPerimeterRatio(result.getPerimeters().get(1) / result.getPerimeters().get(0)* 100);
-            processresult.setAreaRatio(result.getAreas().get(1) / result.getAreas().get(0)* 100);
+            //File outputfile = new File(fileName);
+            //ImageIO.write(image, "png", outputfile);
+            //System.out.println("Output file: " + outputfile);
+            s3Service.uploadImage(image, fileName);
+            String url = s3Service.generatePresignedUrl(fileName);
+            System.out.println("URL: " + url);
+            processresult.setImageUrl(s3Service.generatePresignedUrl(fileName));
+            //processresult.setImageUrl(uploadImageToCloud(outputfile));
+            processresult.setDistanceRatio((new BigDecimal(result.getDistances().get(1) / result.getDistances().get(0)).setScale(3, RoundingMode.HALF_UP)).doubleValue());
+            processresult.setPerimeterRatio((new BigDecimal(result.getPerimeters().get(1) / result.getPerimeters().get(0)).setScale(3, RoundingMode.HALF_UP)).doubleValue());
+            processresult.setAreaRatio((new BigDecimal(result.getAreas().get(1) / result.getAreas().get(0)).setScale(3, RoundingMode.HALF_UP)).doubleValue());
+            
+            processresult.setImageId(fileName);
+            processresult.setNeuroretinalRimPerimeter(result.getPerimeters().get(0));
+            processresult.setNeuroretinalRimArea(result.getAreas().get(0));
+            processresult.setExcavationPerimeter(result.getPerimeters().get(1));
+            processresult.setExcavationArea(result.getAreas().get(1));
+            processresult.setDdlStage(calculateDDLStage(processresult.getDistanceRatio()));
+            processresult.setState(calculateState(processresult.getDdlStage()));
 
             return processresult;
         } catch (IOException e) {
@@ -148,6 +195,34 @@ public class GlaucomaScreeningService {
             return processresult;
 
     }
+
+
+    public int calculateDDLStage(Double distanceRatio) {
+        if(distanceRatio >= 0.4) {
+           return 1;
+        } else if(distanceRatio >= 0.3) {
+            return 2;
+        } else if(distanceRatio >= 0.2) {
+            return 3;
+        } else if(distanceRatio >= 0.1) {
+            return 4;
+        } else if(distanceRatio > 0) {
+            return 5;
+        } else {
+            return 6;
+        }
+    }
+
+    public String calculateState(int ddlsStage){
+        return switch (ddlsStage) {
+            case 1,2,3,4 -> GlaucomaStatus.AT_RISK.getDescription();
+            case 5,6,7 -> GlaucomaStatus.GLAUCOMA_DAMAGE.getDescription();
+            case 8,9,10 -> GlaucomaStatus.GLAUCOMA_DISABILITY.getDescription();
+            default -> "Unknown";
+        };
+    }
+
+
 
     public void processResponseData(String jsonResponse, MultipartFile file) {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -162,12 +237,15 @@ public class GlaucomaScreeningService {
             drawCoordinatesOnImage(image, nerveCoordinates, Color.GREEN);
             drawCoordinatesOnImage(image, excavationCoordinates, Color.BLUE);
 
-             File outputFile = new File("imagen_modificada.png");
-             ImageIO.write(image, "png", outputFile);
+             //File outputFile = new File("imagen_modificada.png");
+             //ImageIO.write(image, "png", outputFile);
+
+
         } catch (JsonProcessingException ex) {
         } catch (IOException ex) {
         }
     }
+
 
 
     private void drawPointsOnImage(BufferedImage image, List<Double> points, Color color) {
@@ -266,6 +344,7 @@ public class GlaucomaScreeningService {
         }
 
         buf.write(pixels);
+        System.out.println("buf:" + buf.size());
 
         return buf.toByteArray();
         

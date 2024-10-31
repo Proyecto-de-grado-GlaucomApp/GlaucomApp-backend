@@ -12,7 +12,7 @@ import org.springframework.test.context.ActiveProfiles;
  * within the application context.
  * </p>
  */
-@ApplicationModuleTest
+@ApplicationModuleTest(mode = ApplicationModuleTest.BootstrapMode.DIRECT_DEPENDENCIES)
 @ActiveProfiles("test")
 public class GlaucomaScreeningModuleIntegrationTest {
 

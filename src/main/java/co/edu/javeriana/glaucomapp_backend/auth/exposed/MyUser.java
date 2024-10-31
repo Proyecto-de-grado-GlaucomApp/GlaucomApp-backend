@@ -72,9 +72,6 @@ public class MyUser {
     @Column(name = "role", nullable = true)
     private String role;
 
-    @OneToMany(mappedBy = "ophthalUser", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Pacient> pacients;
-
     @Override
     public String toString() {
         return "MyUser{id=" + id + ", username='" + username + "', name='" + name + "', role='" + role + "'}";

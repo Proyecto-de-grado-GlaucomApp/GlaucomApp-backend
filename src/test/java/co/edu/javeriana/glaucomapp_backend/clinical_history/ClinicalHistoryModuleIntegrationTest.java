@@ -1,4 +1,4 @@
-package co.edu.javeriana.glaucomapp_backend.userapikey;
+package co.edu.javeriana.glaucomapp_backend.clinical_history;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.modulith.test.ApplicationModuleTest;
@@ -6,10 +6,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @ApplicationModuleTest(mode = ApplicationModuleTest.BootstrapMode.DIRECT_DEPENDENCIES)
 @ActiveProfiles("test")
-public class UserApiKeyModuleIntegrationTest {
-    /**
-     * Verifies that the API Key module is correctly configured and initialized.
-     */
+public class ClinicalHistoryModuleIntegrationTest {
     @Test
     void verifyModule() {
 
