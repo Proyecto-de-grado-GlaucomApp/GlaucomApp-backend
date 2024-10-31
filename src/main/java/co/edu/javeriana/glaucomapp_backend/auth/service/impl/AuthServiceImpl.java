@@ -1,50 +1,8 @@
 
-/**
- * AuthServiceImpl is a service implementation class that handles user authentication and registration.
- * It provides methods for user registration, login, and logout.
- * 
- *  This class uses Spring's {@link Service} annotation to indicate that it's a service component.
- * It also uses dependency injection to inject required dependencies such as {@link MyUserRepository},
- * {@link PasswordEncoder}, {@link AuthenticationManager}, and {@link jwtUtil}.
- * 
- *  Methods:
- *  
- *    - {@link #register(MyUser)} - Registers a new user after validating the input and encoding the password. 
- *    - {@link #login(LogInForm, HttpServletResponse)} - Authenticates a user and generates a JWT token, which is set in an HTTP cookie. 
- *    - {@link #logout(HttpServletResponse)} - Logs out a user by invalidating the JWT token cookie. 
- *  
- * 
- *  Exceptions:
- *  
- *    - {@link IllegalArgumentException} - Thrown if the registration input fields are empty or if the username is already in use. 
- *    - {@link UsernameNotFoundException} - Thrown if the login credentials are invalid or if the user is not found. 
- *  
- * 
- *  Dependencies:
- *  
- *    - {@link MyUserRepository} - Repository for user data access. 
- *    - {@link PasswordEncoder} - Encoder for user passwords. 
- *    - {@link AuthenticationManager} - Manager for authentication processes. 
- *    - {@link jwtUtil} - Service for generating JWT tokens. 
- *  
- * 
- *  Security:
- *  
- *    - JWT tokens are set in HTTP-only, secure cookies with a SameSite attribute to prevent CSRF attacks. 
- *  
- * 
- * @see co.edu.javeriana.glaucomapp_backend.auth.service.AuthService
- * @see co.edu.javeriana.glaucomapp_backend.auth.model.MyUser
- * @see co.edu.javeriana.glaucomapp_backend.auth.model.LogInForm
- * @see co.edu.javeriana.glaucomapp_backend.auth.repository.MyUserRepository
- * @see co.edu.javeriana.glaucomapp_backend.auth.config.jwtUtil
- */
-
 package co.edu.javeriana.glaucomapp_backend.auth.service.impl;
 
 import java.util.UUID;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -68,142 +26,119 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
-
     
     private final MyUserRepository userRepository;
 
-    
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-
-    
     private final AuthenticationManager authenticationManager;
 
     private final JwtUtil jwtUtil;
 
     private final DoctorEventService doctorEventService;
 
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
 
     @Override
     public MyUser register(MyUser user) {
-        // Review if fields are not empty or null
-        if (user.getUsername() == null || user.getUsername().isEmpty() || user.getPassword() == null
-                || user.getPassword().isEmpty() || user.getName() == null || user.getName().isEmpty()) {
-            throw new IllegalArgumentException("Empty fields are not allowed");
-        }
-        // Check if the username is already in use
-        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
-            throw new IllegalArgumentException("Username already in use");
-        }
-        user.setPassword(passwordEncoder().encode(user.getPassword()));
+        validateUserFields(user);
+        checkUsernameAvailability(user.getUsername());
+
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
 
     @Override
     public void login(LogInForm loginForm, HttpServletResponse response) {
-        System.out.println("Login form: " + loginForm.username() + " " + loginForm.password());
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginForm.username(), loginForm.password()));
-        System.out.println("Authentication: " + authentication);
-
-        if (!authentication.isAuthenticated()) {
-            throw new UsernameNotFoundException("Invalid credentials");
-        }
-
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-
-        MyUser user = userRepository.findByUsername(userDetails.getUsername())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        Authentication authentication = authenticateUser(loginForm);
+        MyUser user = findUserByUsername(((UserDetails) authentication.getPrincipal()).getUsername());
 
         String token = jwtUtil.generateToken(user);
+        setJwtCookie(response, token);
+    }
 
-        System.out.println("Token: " + token);
+    @Override
+    public void refreshToken(String token, HttpServletResponse response) {
+        String newToken = jwtUtil.refreshToken(token);
+        invalidateJwtCookie(response);
+        setJwtCookie(response, newToken);
+    }
 
+    @Override
+    public void logout(String authHeader, HttpServletResponse response) {
+        validateAuthToken(authHeader);
+        jwtUtil.invalidateToken(authHeader);
+        invalidateJwtCookie(response);
+    }
+
+    @Override
+    public void closeAccount(String token, HttpServletResponse response) {
+        validateAuthToken(token);
+        UUID id = UUID.fromString(jwtUtil.extractIdFromToken(token));
+        logout(token, response);
+
+        doctorEventService.deletePatient(id);
+        userRepository.deleteById(id);
+    }
+
+
+
+    private void validateUserFields(MyUser user) {
+        if (isNullOrEmpty(user.getUsername()) || isNullOrEmpty(user.getPassword()) || isNullOrEmpty(user.getName())) {
+            throw new IllegalArgumentException("All fields are required");
+        }
+    }
+
+    private void checkUsernameAvailability(String username) {
+        if (userRepository.findByUsername(username).isPresent()) {
+            throw new IllegalArgumentException("Username is already in use");
+        }
+    }
+    private Authentication authenticateUser(LogInForm loginForm) {
+        return authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginForm.username(), loginForm.password())
+        );
+    }
+
+    private MyUser findUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    }
+
+    private void setJwtCookie(HttpServletResponse response, String token) {
         Cookie jwtCookie = new Cookie("jwtToken", token);
         jwtCookie.setHttpOnly(true);
         jwtCookie.setSecure(true);
         jwtCookie.setPath("/");
         jwtCookie.setMaxAge(-1);
-        // jwtCookie.setSameSite("Strict");
-        // Manually set the SameSite attribute
-        response.setHeader("Set-Cookie", String.format("%s=%s; HttpOnly; Secure; SameSite=Strict; Max-Age=%d; Path=/",
-                jwtCookie.getName(), jwtCookie.getValue(), jwtCookie.getMaxAge()));
-
-        response.addCookie(jwtCookie);
-    }
-
-    @Override
-    public void refreshToken(String token, HttpServletResponse response) {
-        // Generate the new token
-        String newToken = jwtUtil.refreshToken(token);
-
-        // Delete the expired cookie by setting its max age to 0
-        Cookie expiredCookie = new Cookie("jwtToken", null);
-        expiredCookie.setPath("/");
-        expiredCookie.setHttpOnly(true);
-        expiredCookie.setSecure(true);
-        expiredCookie.setMaxAge(0); // This will tell the browser to delete the cookie
-        response.addCookie(expiredCookie);
-
-        // Set the new token in a cookie
-        Cookie jwtCookie = new Cookie("jwtToken", newToken);
-        jwtCookie.setHttpOnly(true);
-        jwtCookie.setSecure(true);
-        jwtCookie.setPath("/");
-        jwtCookie.setMaxAge(-1); // Session cookie
-
-        // Add SameSite attribute to the Set-Cookie header
         response.setHeader("Set-Cookie", String.format("%s=%s; HttpOnly; Secure; SameSite=Strict; Path=/",
                 jwtCookie.getName(), jwtCookie.getValue()));
-
-        // Add the new cookie to the response
         response.addCookie(jwtCookie);
     }
 
-    @Override
-    public void logout(String authHeader, HttpServletResponse response) {
-        System.out.println("We are on log out: " + authHeader);
-        if (jwtUtil.extractIdFromToken(authHeader) == null) {
-            throw new UnauthorizedException("Invalid Token or ophtalmologist ID not found.");
-        }
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new IllegalArgumentException("Invalid API Key");
-        }
-        if (jwtUtil.isTokenExpired(authHeader.substring(7).trim())) {
-            // Token is expired error message
-            throw new UnauthorizedException("Token is expired");
-        }
-        System.out.println("after token expired");
-        if (!jwtUtil.validateToken(authHeader.substring(7).trim())) {
-            throw new UnauthorizedException("Invalid Token");
-        }
-        System.out.println("after validate token");
-        // Invalidate the token
-        jwtUtil.invalidateToken(authHeader);
-
-        // Invalidate cookie
+    private void invalidateJwtCookie(HttpServletResponse response) {
         Cookie jwtCookie = new Cookie("jwtToken", null);
         jwtCookie.setPath("/");
         jwtCookie.setHttpOnly(true);
-        jwtCookie.setMaxAge(0);
         jwtCookie.setSecure(true);
+        jwtCookie.setMaxAge(0);
         response.addCookie(jwtCookie);
     }
 
-    @Override
-    public void closeAccount(String token, HttpServletResponse response) {
-        UUID id = UUID.fromString(jwtUtil.extractIdFromToken(token));
-        logout(token, response);
+    private void validateAuthToken(String authHeader) {
+        if (isNullOrEmpty(authHeader) || !authHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Invalid API Key");
+        }
+        String token = authHeader.substring(7).trim();
+        if (jwtUtil.extractIdFromToken(authHeader) == null) {
+            throw new UnauthorizedException("Invalid Token or User ID not found.");
+        }
+        if (jwtUtil.isTokenExpired(token) || !jwtUtil.validateToken(token)) {
+            throw new UnauthorizedException("Token is invalid or expired");
+        }
+    }
 
-        doctorEventService.deletePatient(id);
-        //events.publishEvent(new OphtalmologistDeletedEvent(id));
-        // Review if the ophtal has patients and if patients have exams
-        
-        // Delete the user from the database
-        System.out.println("Token on Close accoun method: " + token);
-        userRepository.deleteById(id);
+    private boolean isNullOrEmpty(String str) {
+        return str == null || str.isEmpty();
     }
 
 }
