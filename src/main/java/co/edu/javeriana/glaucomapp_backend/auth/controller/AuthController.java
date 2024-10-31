@@ -117,4 +117,15 @@ public class AuthController {
         }
     }
 
+    //closeAccount
+    @PostMapping("/closeaccount")
+    public ResponseEntity<String> closeAccount(@RequestHeader("Authorization") String token, HttpServletResponse response) {
+        try {
+            authService.closeAccount(token, response);
+            return ResponseEntity.ok("Account closed successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body("Account close failed: " + e.getMessage());
+        }
+    }
+
 }
