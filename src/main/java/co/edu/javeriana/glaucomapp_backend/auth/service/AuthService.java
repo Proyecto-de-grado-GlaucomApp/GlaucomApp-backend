@@ -1,4 +1,3 @@
-
 /**
  * AuthService interface provides methods for user authentication and account management.
  * It includes methods for user registration, login, logout, token refresh, and account closure.
