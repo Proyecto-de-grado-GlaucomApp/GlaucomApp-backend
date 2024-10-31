@@ -14,6 +14,7 @@ import java.io.ByteArrayInputStream;
 
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetUrlRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -95,4 +96,21 @@ public class S3ServiceImpl implements S3Service{
         }
     }
 
+    @Override
+    public String deleteImage(String fileName) {
+        try {
+            // Crear la solicitud para eliminar el objeto
+            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(fileName)
+                    .build();
+
+            // Ejecutar la solicitud para eliminar el objeto
+            s3Client.deleteObject(deleteObjectRequest);
+
+            return "File deleted successfully: " + fileName;
+        } catch (Exception e) {
+            return "Error deleting file: " + e.getMessage();
+        }
+    }
 }
