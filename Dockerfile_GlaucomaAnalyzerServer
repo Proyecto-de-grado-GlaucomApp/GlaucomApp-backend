@@ -1,0 +1,31 @@
+## =========================================================================
+## @author Leonardo Florez-Valencia (florez-l@javeriana.edu.co)
+## =========================================================================
+## Build the image:
+## sudo docker build --no-cache -f Dockerfile_GlaucomaAnalyzerServer -t glaucomaanalyzerserver:latest .
+## sudo docker run -p 5000:5000 glaucomaanalyzerserver:latest
+## sudo docker run -it glaucomaanalyzerserver:latest /bin/bash
+## =========================================================================
+
+FROM debian:bookworm-slim
+LABEL org.opencontainers.image.authors="florez-l@javeriana.edu.co"
+
+RUN apt -y update
+RUN apt -y upgrade
+RUN apt install -y bzip2 libmicrohttpd12
+
+WORKDIR /app
+ADD https://www.dropbox.com/scl/fi/qgu0lr1opde5gckorl2rh/GlaucomaAnalyzer.tar.bz2?rlkey=98clpv1xg66luwwsfuc8vzing&st=xpcjhzff&dl=1 GlaucomaAnalyzer.tar.bz2
+
+RUN tar xjvf GlaucomaAnalyzer.tar.bz2
+RUN rm GlaucomaAnalyzer.tar.bz2
+RUN ln -fs libhttpserver.so libhttpserver.so.0
+RUN apt -y remove bzip2
+RUN apt -y autoclean
+RUN apt -y autoremove
+ENV LD_LIBRARY_PATH=/usr/lib:/app
+
+EXPOSE 5000
+CMD [ "/app/GlaucomaAnalyzerServer", "upload", "5000" ]
+
+## eof - $RCSfile$

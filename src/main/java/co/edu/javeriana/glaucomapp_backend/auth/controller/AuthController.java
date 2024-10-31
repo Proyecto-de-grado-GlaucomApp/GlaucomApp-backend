@@ -35,18 +35,24 @@
 package co.edu.javeriana.glaucomapp_backend.auth.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.boot.autoconfigure.data.redis.RedisProperties.Lettuce.Cluster.Refresh;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import co.edu.javeriana.glaucomapp_backend.auth.exposed.MyUser;
 import co.edu.javeriana.glaucomapp_backend.auth.model.LogInForm;
-import co.edu.javeriana.glaucomapp_backend.auth.model.MyUser;
+import co.edu.javeriana.glaucomapp_backend.auth.model.RefreshTokenRequest;
 import co.edu.javeriana.glaucomapp_backend.auth.service.AuthService;
+import co.edu.javeriana.glaucomapp_backend.common.exceptions.UnauthorizedException;
 import jakarta.servlet.http.HttpServletResponse;
 
-@RequestMapping("/auth")
+@RequestMapping("mobile/auth")
 @RestController
 public class AuthController {
 
@@ -67,14 +73,15 @@ public class AuthController {
                 return ResponseEntity.status(409).body("Register failed: " + e.getMessage());
             }
             if (e.getMessage().contains("Empty fields are not allowed")) {
-                return ResponseEntity.badRequest().body("Register failed: " + e.getMessage()); 
+                return ResponseEntity.badRequest().body("Register failed: " + e.getMessage());
             }
             return ResponseEntity.internalServerError().body("Register failed: " + e.getMessage());
         }
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> authenticateAndSetToken(@RequestBody LogInForm loginForm, HttpServletResponse response) {
+    public ResponseEntity<String> authenticateAndSetToken(@RequestBody LogInForm loginForm,
+            HttpServletResponse response) {
         try {
             authService.login(loginForm, response);
             return ResponseEntity.ok("Authentication successful");
@@ -83,13 +90,41 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpServletResponse response) {
+    @PostMapping("/refresh")
+    public ResponseEntity<String> refreshToken(@RequestBody RefreshTokenRequest token, HttpServletResponse response) {
         try {
-            authService.logout(response);
+            authService.refreshToken(token.refreshToken(), response);
+            return ResponseEntity.ok("Token refreshed successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token refresh failed: " + e.getMessage());
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.status(404).body("Token refresh failed: " + e.getMessage());
+        }catch (UnauthorizedException e) {
+            return ResponseEntity.status(401).body("Token refresh failed: " + e.getMessage());
+        }catch (Exception e) {
+            return ResponseEntity.status(500).body("Token refresh failed, try later"+ e.getMessage());
+        }
+
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestHeader("Authorization") String token, HttpServletResponse response) {
+        try {
+            authService.logout(token, response);
             return ResponseEntity.ok("Logout successful");
         } catch (Exception e) {
             return ResponseEntity.status(401).body("Logout failed: " + e.getMessage());
+        }
+    }
+
+    //closeAccount
+    @PostMapping("/closeaccount")
+    public ResponseEntity<String> closeAccount(@RequestHeader("Authorization") String token, HttpServletResponse response) {
+        try {
+            authService.closeAccount(token, response);
+            return ResponseEntity.ok("Account closed successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body("Account close failed: " + e.getMessage());
         }
     }
 

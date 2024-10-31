@@ -5,7 +5,7 @@
  * 
  *  This class uses Spring's {@link Service} annotation to indicate that it's a service component.
  * It also uses dependency injection to inject required dependencies such as {@link MyUserRepository},
- * {@link PasswordEncoder}, {@link AuthenticationManager}, and {@link JwtService}.
+ * {@link PasswordEncoder}, {@link AuthenticationManager}, and {@link jwtUtil}.
  * 
  *  Methods:
  *  
@@ -25,7 +25,7 @@
  *    - {@link MyUserRepository} - Repository for user data access. 
  *    - {@link PasswordEncoder} - Encoder for user passwords. 
  *    - {@link AuthenticationManager} - Manager for authentication processes. 
- *    - {@link JwtService} - Service for generating JWT tokens. 
+ *    - {@link jwtUtil} - Service for generating JWT tokens. 
  *  
  * 
  *  Security:
@@ -37,54 +37,67 @@
  * @see co.edu.javeriana.glaucomapp_backend.auth.model.MyUser
  * @see co.edu.javeriana.glaucomapp_backend.auth.model.LogInForm
  * @see co.edu.javeriana.glaucomapp_backend.auth.repository.MyUserRepository
- * @see co.edu.javeriana.glaucomapp_backend.auth.config.JwtService
+ * @see co.edu.javeriana.glaucomapp_backend.auth.config.jwtUtil
  */
 
 package co.edu.javeriana.glaucomapp_backend.auth.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.UUID;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import co.edu.javeriana.glaucomapp_backend.auth.exposed.MyUser;
 import co.edu.javeriana.glaucomapp_backend.auth.model.LogInForm;
-import co.edu.javeriana.glaucomapp_backend.auth.model.MyUser;
+import co.edu.javeriana.glaucomapp_backend.auth.repository.DoctorEventService;
 import co.edu.javeriana.glaucomapp_backend.auth.repository.MyUserRepository;
-import co.edu.javeriana.glaucomapp_backend.auth.config.JwtService;
 import co.edu.javeriana.glaucomapp_backend.auth.service.AuthService;
+import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
+import co.edu.javeriana.glaucomapp_backend.common.exceptions.UnauthorizedException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    @Autowired
-    private MyUserRepository userRepository;
+    
+    private final MyUserRepository userRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
 
-    @Autowired
-    private JwtService jwtService;
+    
+    private final AuthenticationManager authenticationManager;
+
+    private final JwtUtil jwtUtil;
+
+    private final DoctorEventService doctorEventService;
+
 
     @Override
     public MyUser register(MyUser user) {
-        //Review if fields are not empty or null
+        // Review if fields are not empty or null
         if (user.getUsername() == null || user.getUsername().isEmpty() || user.getPassword() == null
-                || user.getPassword().isEmpty() || user.getName() == null || user.getName().isEmpty()){
+                || user.getPassword().isEmpty() || user.getName() == null || user.getName().isEmpty()) {
             throw new IllegalArgumentException("Empty fields are not allowed");
         }
         // Check if the username is already in use
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new IllegalArgumentException("Username already in use");
         }
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setPassword(passwordEncoder().encode(user.getPassword()));
         return userRepository.save(user);
     }
 
@@ -99,24 +112,20 @@ public class AuthServiceImpl implements AuthService {
             throw new UsernameNotFoundException("Invalid credentials");
         }
 
-        
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-        
         MyUser user = userRepository.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-    
-        String token = jwtService.generateToken(user);
+        String token = jwtUtil.generateToken(user);
 
         System.out.println("Token: " + token);
 
-       
         Cookie jwtCookie = new Cookie("jwtToken", token);
         jwtCookie.setHttpOnly(true);
-        jwtCookie.setSecure(true); 
+        jwtCookie.setSecure(true);
         jwtCookie.setPath("/");
-        jwtCookie.setMaxAge(-1); 
+        jwtCookie.setMaxAge(-1);
         // jwtCookie.setSameSite("Strict");
         // Manually set the SameSite attribute
         response.setHeader("Set-Cookie", String.format("%s=%s; HttpOnly; Secure; SameSite=Strict; Max-Age=%d; Path=/",
@@ -126,12 +135,75 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void logout(HttpServletResponse response) {
+    public void refreshToken(String token, HttpServletResponse response) {
+        // Generate the new token
+        String newToken = jwtUtil.refreshToken(token);
+
+        // Delete the expired cookie by setting its max age to 0
+        Cookie expiredCookie = new Cookie("jwtToken", null);
+        expiredCookie.setPath("/");
+        expiredCookie.setHttpOnly(true);
+        expiredCookie.setSecure(true);
+        expiredCookie.setMaxAge(0); // This will tell the browser to delete the cookie
+        response.addCookie(expiredCookie);
+
+        // Set the new token in a cookie
+        Cookie jwtCookie = new Cookie("jwtToken", newToken);
+        jwtCookie.setHttpOnly(true);
+        jwtCookie.setSecure(true);
+        jwtCookie.setPath("/");
+        jwtCookie.setMaxAge(-1); // Session cookie
+
+        // Add SameSite attribute to the Set-Cookie header
+        response.setHeader("Set-Cookie", String.format("%s=%s; HttpOnly; Secure; SameSite=Strict; Path=/",
+                jwtCookie.getName(), jwtCookie.getValue()));
+
+        // Add the new cookie to the response
+        response.addCookie(jwtCookie);
+    }
+
+    @Override
+    public void logout(String authHeader, HttpServletResponse response) {
+        System.out.println("We are on log out: " + authHeader);
+        if (jwtUtil.extractIdFromToken(authHeader) == null) {
+            throw new UnauthorizedException("Invalid Token or ophtalmologist ID not found.");
+        }
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Invalid API Key");
+        }
+        if (jwtUtil.isTokenExpired(authHeader.substring(7).trim())) {
+            // Token is expired error message
+            throw new UnauthorizedException("Token is expired");
+        }
+        System.out.println("after token expired");
+        if (!jwtUtil.validateToken(authHeader.substring(7).trim())) {
+            throw new UnauthorizedException("Invalid Token");
+        }
+        System.out.println("after validate token");
+        // Invalidate the token
+        jwtUtil.invalidateToken(authHeader);
+
+        // Invalidate cookie
         Cookie jwtCookie = new Cookie("jwtToken", null);
         jwtCookie.setPath("/");
         jwtCookie.setHttpOnly(true);
-        jwtCookie.setMaxAge(0); 
+        jwtCookie.setMaxAge(0);
         jwtCookie.setSecure(true);
         response.addCookie(jwtCookie);
     }
+
+    @Override
+    public void closeAccount(String token, HttpServletResponse response) {
+        UUID id = UUID.fromString(jwtUtil.extractIdFromToken(token));
+        logout(token, response);
+
+        doctorEventService.deletePatient(id);
+        //events.publishEvent(new OphtalmologistDeletedEvent(id));
+        // Review if the ophtal has patients and if patients have exams
+        
+        // Delete the user from the database
+        System.out.println("Token on Close accoun method: " + token);
+        userRepository.deleteById(id);
+    }
+
 }
