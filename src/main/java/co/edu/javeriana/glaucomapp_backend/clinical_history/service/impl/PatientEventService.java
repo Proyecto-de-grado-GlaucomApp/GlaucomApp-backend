@@ -1,35 +1,32 @@
-package co.edu.javeriana.glaucomapp_backend.clinical_history.service;
+package co.edu.javeriana.glaucomapp_backend.clinical_history.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import co.edu.javeriana.glaucomapp_backend.auth.event.OphtalmologistDeletedEvent;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.pacient.Pacient;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.repository.ExamRepository;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.repository.PacientRepository;
 import co.edu.javeriana.glaucomapp_backend.common.S3.S3Service;
+import lombok.RequiredArgsConstructor;
+
+import org.springframework.modulith.events.ApplicationModuleListener;
+import org.springframework.stereotype.Component;
 
 @Service
-public class DoctorEventListener {
-    
+@RequiredArgsConstructor
+public class PatientEventService {
+
     private final PacientRepository pacientRepository;
     private final ExamRepository examRepository;
-        private final S3Service s3Service;
+    private final S3Service s3Service;
 
-    public DoctorEventListener(PacientRepository pacientRepository, ExamRepository examRepository, S3Service s3Service) {
-        this.pacientRepository = pacientRepository;
-        this.examRepository = examRepository;
-        this.s3Service = s3Service;
-    }
+    @ApplicationModuleListener
+    void on(UUID ophtalmologistId){
+                System.out.println("Doctor deleted event received");
 
-    @EventListener
-    public void handleOphtalmologistDeletedEvent(OphtalmologistDeletedEvent event) {
-        System.out.println("Doctor deleted event received");
-        UUID  ophtalmologistId = event.getOphtalmologistId();
         //initialize an empty list of url images
         List<String> urlImages = new ArrayList<>();
 
@@ -51,5 +48,5 @@ public class DoctorEventListener {
             });
         }
     }
-}
 
+}
