@@ -1,31 +1,41 @@
 /**
- * Represents an Exam entity in the system.
- * This entity is used to store information about a medical exam.
+ * Represents an exam entity with various attributes related to the exam details.
+ * This entity is mapped to a database table using JPA annotations.
+ * 
+ * Attributes:
+ * 
+ *   id: Unique identifier for the exam, generated automatically.
+ *   name: Name of the exam.
+ *   date: Date when the exam was conducted.
+ *   urlImage: URL of the image associated with the exam.
+ *   distanceRatio: Distance ratio measured in the exam.
+ *   perimeterRatio: Perimeter ratio measured in the exam.
+ *   areaRatio: Area ratio measured in the exam.
+ *   neuroretinalRimPerimeter: Perimeter of the neuroretinal rim.
+ *   neuroretinalRimArea: Area of the neuroretinal rim.
+ *   excavationPerimeter: Perimeter of the excavation (cup).
+ *   excavationArea: Area of the excavation (cup).
+ *   state: State or status of the exam.
+ *   ddlStage: DDL stage of the exam.
+ *   pacient: The patient associated with the exam.
+ * 
  * 
  * Annotations:
  * 
- *   {@link Entity} - Specifies that the class is an entity and is mapped to a database table.
- *   {@link Data} - A Lombok annotation to generate getters, setters, toString, equals, and hashCode methods.
- *   {@link Builder} - A Lombok annotation to implement the builder pattern.
- *   {@link AllArgsConstructor} - A Lombok annotation to generate a constructor with all fields as parameters.
- *   {@link NoArgsConstructor} - A Lombok annotation to generate a no-argument constructor.
+ *   @Entity: Specifies that the class is an entity and is mapped to a database table.
+ *   @Id: Specifies the primary key of an entity.
+ *   @GeneratedValue: Provides for the specification of generation strategies for the values of primary keys.
+ *   @Column: Used to specify the mapped column for a persistent property or field.
+ *   @ManyToOne: Defines a single-valued association to another entity class that has many-to-one multiplicity.
+ *   @JoinColumn: Specifies a column for joining an entity association or element collection.
  * 
  * 
- * Fields:
+ * Lombok Annotations:
  * 
- *   {@code id} - The unique identifier for the exam, generated automatically.
- *   {@code name} - The name of the exam.
- *   {@code date} - The date when the exam was conducted.
- *   {@code urlImage} - The URL of the image associated with the exam.
- *   {@code distanceRatio} - The distance ratio measured in the exam.
- *   {@code perimeterRatio} - The perimeter ratio measured in the exam.
- *   {@code areaRatio} - The area ratio measured in the exam.
- *   {@code pacient} - The patient associated with the exam.
- * 
- * 
- * Methods:
- * 
- *   {@code toString()} - Returns a string representation of the exam object.
+ *   @Data: Generates getters, setters, toString, equals, and hashCode methods.
+ *   @Builder: Produces complex builder APIs for the class.
+ *   @AllArgsConstructor: Generates a constructor with 1 parameter for each field in the class.
+ *   @NoArgsConstructor: Generates a no-args constructor.
  * 
  */
 package co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam;

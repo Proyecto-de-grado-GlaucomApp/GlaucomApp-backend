@@ -1,10 +1,10 @@
 /**
- * Represents a response containing details of an exam.
+ * Represents the response for an exam in the clinical history.
  * 
- * @param examId  the unique identifier of the exam
- * @param name    the name of the exam
- * @param date    the date when the exam was conducted
- * @param urlImage the URL of the image associated with the exam
+ * @param examId The unique identifier of the exam.
+ * @param name The name of the exam.
+ * @param date The date when the exam was conducted.
+ * @param urlImage The URL of the image associated with the exam.
  */
 package co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam;
 
