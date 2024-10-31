@@ -11,6 +11,6 @@ package co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam;
  * @param perimeterRatio The perimeter ratio measured in the exam.
  * @param areaRatio      The area ratio measured in the exam.
  */
-public record ExamRequest (String cedula, String name, String date, String urlImage, Double distanceRatio, Double perimeterRatio,  Double areaRatio ){
+public record ExamRequest (String cedula, String name, String date, String urlImage, Double distanceRatio, Double perimeterRatio,  Double areaRatio,  Double neuroretinalRimPerimeter, Double neuroretinalRimArea, Double excavationPerimeter, Double excavationArea, String state, int ddlStage) {
     
 }
