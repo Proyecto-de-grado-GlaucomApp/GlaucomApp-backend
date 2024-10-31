@@ -1,27 +1,29 @@
 package co.edu.javeriana.glaucomapp_backend.clinical_history.service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import co.edu.javeriana.glaucomapp_backend.auth.event.OphtalmologistDeletedEvent;
+import co.edu.javeriana.glaucomapp_backend.clinical_history.model.pacient.Pacient;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.repository.ExamRepository;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.repository.PacientRepository;
-import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.Exam;
-import co.edu.javeriana.glaucomapp_backend.clinical_history.model.pacient.Pacient;
-
-import java.util.ArrayList;
-import java.util.List;
-import org.springframework.context.event.EventListener;
-import java.util.UUID;
+import co.edu.javeriana.glaucomapp_backend.common.S3.S3Service;
 
 @Service
 public class DoctorEventListener {
     
     private final PacientRepository pacientRepository;
     private final ExamRepository examRepository;
+        private final S3Service s3Service;
 
-    public DoctorEventListener(PacientRepository pacientRepository, ExamRepository examRepository) {
+    public DoctorEventListener(PacientRepository pacientRepository, ExamRepository examRepository, S3Service s3Service) {
         this.pacientRepository = pacientRepository;
         this.examRepository = examRepository;
+        this.s3Service = s3Service;
     }
 
     @EventListener
@@ -42,6 +44,11 @@ public class DoctorEventListener {
                 pacientRepository.delete(pacient);
             });
             System.out.println("urlImages: " + urlImages);
+            urlImages.forEach(urlImage -> {
+                System.out.println("Deleting image: " + urlImage);
+                s3Service.deleteImage(urlImage);
+                //deleteImage(urlImage);
+            });
         }
     }
 }

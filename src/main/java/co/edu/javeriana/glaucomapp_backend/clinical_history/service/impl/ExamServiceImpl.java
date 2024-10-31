@@ -38,12 +38,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
-import co.edu.javeriana.glaucomapp_backend.auth.exposed.MyUser;
-import co.edu.javeriana.glaucomapp_backend.auth.repository.MyUserRepository;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.Exam;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.ExamRequest;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.ExamRes;
@@ -179,6 +176,9 @@ public class ExamServiceImpl implements ExamService {
 
         // Verify the relaction between exam, pacient and ophtal are correct
         verifyExam(ophtalId, pacientId, examId);
+        
+        s3Service.deleteImage(examRepository.findById(examId).get().getUrlImage());
+        System.out.println("Image deleted");
 
         // Delete exam
         examRepository.deleteById(examId);
