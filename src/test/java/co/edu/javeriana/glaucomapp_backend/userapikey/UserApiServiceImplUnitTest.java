@@ -38,33 +38,31 @@ public class UserApiServiceImplUnitTest {
 
 
     @Test
-void testRegisterUser_Success() {
-    // Configura el mock para que no se encuentre un usuario con el email dado
-    when(userApiRepository.findByEmail("email@example.com")).thenReturn(Optional.empty());
-
-    // Configura el mock de passwordEncoder para que devuelva una contraseña encriptada simulada
-    when(passwordEncoder.encode("plainPassword")).thenReturn("hashedPassword");
-
-    // Configura el mock del repositorio para simular el guardado del usuario
-    UserApi savedUser = new UserApi();
-    savedUser.setId(1L); // Asigna un ID simulado para verificar que el guardado fue exitoso
-    savedUser.setEmail("email@example.com");
-    savedUser.setContactName("username");
-    savedUser.setEntity("entity");
-    savedUser.setHashedPassword("hashedPassword");
-
-    when(userApiRepository.save(any(UserApi.class))).thenReturn(savedUser);
-
-    // Llama al método que se va a probar
-    UserApiDTO userApiDTO = new UserApiDTO("email@example.com", "entity", "plainPassword", "username");
-    boolean result = userApiService.registerUser(userApiDTO);
-
-    // Verifica que el resultado sea true
-    assertThat(result).isTrue();
-
-    // Verifica que se haya llamado al método save en userApiRepository
-    verify(userApiRepository, times(1)).save(any(UserApi.class));
-}
+    void testRegisterUser_Success() {
+        
+        when(userApiRepository.findByEmail("email@example.com")).thenReturn(Optional.empty());
+    
+           
+        UserApi savedUser = new UserApi();
+        savedUser.setId(1L); // Asigna un ID simulado para verificar que el guardado fue exitoso
+        savedUser.setEmail("email@example.com");
+        savedUser.setContactName("username");
+        savedUser.setEntity("entity");
+        savedUser.setHashedPassword("hashedPassword");
+    
+        when(userApiRepository.save(any(UserApi.class))).thenReturn(savedUser);
+    
+        // Llama al método que se va a probar
+        UserApiDTO userApiDTO = new UserApiDTO("email@example.com", "entity", "plainPassword", "username");
+        boolean result = userApiService.registerUser(userApiDTO);
+    
+        // Verifica que el resultado sea true
+        assertThat(result).isTrue();
+    
+        // Verifica que se haya llamado al método save en userApiRepository
+        verify(userApiRepository, times(1)).save(any(UserApi.class));
+    }
+    
 
 
     @Test
@@ -102,19 +100,20 @@ void testRegisterUser_Success() {
         UserApi existingUser1 = new UserApi();
         existingUser1.setId(1L);
         existingUser1.setEmail("email1@example.com");
-
+    
         UserApi existingUser2 = new UserApi();
         existingUser2.setId(2L);
         existingUser2.setEmail("email2@example.com");
-
-        // Configuración de los mocks
-        when(userApiRepository.findById(2L)).thenReturn(Optional.of(existingUser2));
-        when(userApiRepository.findByEmail("email1@example.com")).thenReturn(Optional.of(existingUser1));
-
+    
+        when(userApiRepository.findByEmail("email1@example.com")).thenReturn(Optional.of(existingUser1)); // Se espera que este correo ya esté en uso
+    
         UserApiDTO updatedUserApiDTO = new UserApiDTO("email1@example.com", "newEntity", "newPlainPassword", "usernameUpdated");
-
+    
+        // Asegúrate de que se lanza la excepción
         assertThatThrownBy(() -> userApiService.editUser(2L, updatedUserApiDTO))
                 .isInstanceOf(EmailAlreadyExistsException.class)
                 .hasMessage("Email already exists");
     }
+    
+    
 }

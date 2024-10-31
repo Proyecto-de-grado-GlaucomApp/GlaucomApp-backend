@@ -50,6 +50,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -72,7 +73,10 @@ public class AuthServiceImpl implements AuthService {
     private final MyUserRepository userRepository;
 
     
-    private final PasswordEncoder passwordEncoder;
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
 
     
     private final AuthenticationManager authenticationManager;
@@ -93,7 +97,7 @@ public class AuthServiceImpl implements AuthService {
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new IllegalArgumentException("Username already in use");
         }
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setPassword(passwordEncoder().encode(user.getPassword()));
         return userRepository.save(user);
     }
 
