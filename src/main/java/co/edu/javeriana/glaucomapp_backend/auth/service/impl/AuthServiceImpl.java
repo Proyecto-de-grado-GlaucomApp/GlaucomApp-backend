@@ -43,8 +43,10 @@
 package co.edu.javeriana.glaucomapp_backend.auth.service.impl;
 
 import java.util.UUID;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -54,11 +56,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import co.edu.javeriana.glaucomapp_backend.auth.exposed.MyUser;
+import co.edu.javeriana.glaucomapp_backend.clinical_history.model.pacient.Pacient;
+import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.Exam;
+import co.edu.javeriana.glaucomapp_backend.clinical_history.service.impl.*;
+
 import co.edu.javeriana.glaucomapp_backend.auth.model.LogInForm;
 import co.edu.javeriana.glaucomapp_backend.auth.repository.MyUserRepository;
 import co.edu.javeriana.glaucomapp_backend.auth.service.AuthService;
 import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.UnauthorizedException;
+import co.edu.javeriana.glaucomapp_backend.auth.event.OphtalmologistDeletedEvent;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -76,13 +83,15 @@ public class AuthServiceImpl implements AuthService {
 
     private final JwtUtil jwtUtil;
 
+    private final ApplicationEventPublisher events;
+
     public AuthServiceImpl(JwtUtil jwtUtil, MyUserRepository userRepository, PasswordEncoder passwordEncoder,
-            AuthenticationManager authenticationManager) {
+            AuthenticationManager authenticationManager, ApplicationEventPublisher events) {
         this.jwtUtil = jwtUtil;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
-
+        this.events = events;
     }
 
     @Override
@@ -189,6 +198,19 @@ public class AuthServiceImpl implements AuthService {
         jwtCookie.setMaxAge(0);
         jwtCookie.setSecure(true);
         response.addCookie(jwtCookie);
+    }
+
+    @Override
+    public void closeAccount(String token, HttpServletResponse response) {
+        UUID id = UUID.fromString(jwtUtil.extractIdFromToken(token));
+        logout(token, response);
+
+        events.publishEvent(new OphtalmologistDeletedEvent(id));
+        // Review if the ophtal has patients and if patients have exams
+        
+        // Delete the user from the database
+        System.out.println("Token on Close accoun method: " + token);
+        userRepository.deleteById(id);
     }
 
 }

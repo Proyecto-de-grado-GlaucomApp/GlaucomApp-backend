@@ -21,4 +21,5 @@ public interface AuthService {
     public void login(LogInForm loginForm, HttpServletResponse response);
     public void logout(String authHeader,HttpServletResponse response);
     public void refreshToken(String expiredString, HttpServletResponse response);
+    public void closeAccount(String token, HttpServletResponse response);
 }
