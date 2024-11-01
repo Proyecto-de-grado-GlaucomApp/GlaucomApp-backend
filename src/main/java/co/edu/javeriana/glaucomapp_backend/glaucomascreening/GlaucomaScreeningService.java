@@ -304,25 +304,25 @@ public class GlaucomaScreeningService {
         hdr[0] = (byte) 0x00;
 
         if( pix_size == 1){
-            hdr[0] |= ( 1 << 4 );
+            hdr[0] |= (byte) 16;
         }
         else if( pix_size == 2){
-            hdr[0] |= ( 3 << 4 );
+            hdr[0] |= (byte) 48;
         }
         else if( pix_size == 4){
-            hdr[0] |= ( 5 << 4 );
+            hdr[0] |= (byte) 80;
         } // 
-        hdr[0] |= (byte) 0x20;
+        hdr[0] |= (byte) 4;
 
         if( channels == 3 )
         {
-            hdr[0] |= 2;
+            hdr[0] |= (byte) 2;
         }
         else if( channels == 4 )
         {
-            hdr[0] |= 3;
+            hdr[0] |= (byte) 3;
         }
-        hdr[0] = (byte) 0x16;
+
         System.out.println("hdr:" + hdr[0]);
 
          ByteArrayOutputStream buf = new ByteArrayOutputStream();
@@ -391,4 +391,3 @@ public class GlaucomaScreeningService {
 
 
 }
-
