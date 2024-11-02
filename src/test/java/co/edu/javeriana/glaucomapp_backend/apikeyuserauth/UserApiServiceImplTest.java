@@ -1,4 +1,4 @@
-package co.edu.javeriana.glaucomapp_backend.userapikey;
+package co.edu.javeriana.glaucomapp_backend.apikeyuserauth;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
 
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.EmailAlreadyExistsException;
 

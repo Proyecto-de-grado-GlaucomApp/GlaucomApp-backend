@@ -1,4 +1,4 @@
-package co.edu.javeriana.glaucomapp_backend.userapikey;
+package co.edu.javeriana.glaucomapp_backend.apikeyuserauth;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

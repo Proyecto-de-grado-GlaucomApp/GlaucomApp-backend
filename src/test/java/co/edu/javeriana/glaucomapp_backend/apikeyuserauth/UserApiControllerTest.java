@@ -1,4 +1,4 @@
-package  co.edu.javeriana.glaucomapp_backend.userapikey;
+package  co.edu.javeriana.glaucomapp_backend.apikeyuserauth;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
 import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.EmailAlreadyExistsException;
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.UnauthorizedException;

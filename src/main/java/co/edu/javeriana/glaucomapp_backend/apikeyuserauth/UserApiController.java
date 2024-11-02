@@ -1,4 +1,4 @@
-package co.edu.javeriana.glaucomapp_backend.userapikey;
+package co.edu.javeriana.glaucomapp_backend.apikeyuserauth;
 
 import java.util.Map;
 import java.util.Optional;
