@@ -1,4 +1,4 @@
-package co.edu.javeriana.glaucomapp_backend.apikey;
+package co.edu.javeriana.glaucomapp_backend.apikeymanagement;
 import org.aspectj.lang.ProceedingJoinPoint;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;

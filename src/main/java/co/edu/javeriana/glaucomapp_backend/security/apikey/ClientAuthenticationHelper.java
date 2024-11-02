@@ -2,7 +2,7 @@ package co.edu.javeriana.glaucomapp_backend.security.apikey;
 
 import org.springframework.stereotype.Service;
 
-import co.edu.javeriana.glaucomapp_backend.apikey.exposed.ApiKeyExternalService;
+import co.edu.javeriana.glaucomapp_backend.apikeymanagement.exposed.ApiKeyExternalService;
 import lombok.RequiredArgsConstructor;
 
 /**

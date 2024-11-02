@@ -1,4 +1,4 @@
-package co.edu.javeriana.glaucomapp_backend.apikey.exposed;
+package co.edu.javeriana.glaucomapp_backend.apikeymanagement.exposed;
 
 /**
  * Service interface for managing API key operations.

@@ -1,5 +1,5 @@
 @org.springframework.modulith.ApplicationModule(
-    allowedDependencies = {"apikey::exposed",
+    allowedDependencies = {"apikeymanagement::exposed",
                            "common",
                         "auth::exposed"}
 )

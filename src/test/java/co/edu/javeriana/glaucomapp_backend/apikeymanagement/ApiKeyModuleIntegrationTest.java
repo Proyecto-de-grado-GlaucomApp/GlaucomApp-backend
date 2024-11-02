@@ -1,4 +1,4 @@
-package co.edu.javeriana.glaucomapp_backend.apikey;
+package co.edu.javeriana.glaucomapp_backend.apikeymanagement;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.modulith.test.ApplicationModuleTest;

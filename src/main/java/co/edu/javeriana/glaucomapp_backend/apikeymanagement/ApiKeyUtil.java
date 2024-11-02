@@ -1,6 +1,6 @@
-package co.edu.javeriana.glaucomapp_backend.apikey;
+package co.edu.javeriana.glaucomapp_backend.apikeymanagement;
 
-import co.edu.javeriana.glaucomapp_backend.apikey.exposed.ApiKeyDTO;
+import co.edu.javeriana.glaucomapp_backend.apikeymanagement.exposed.ApiKeyDTO;
 import lombok.experimental.UtilityClass;
 
 /**

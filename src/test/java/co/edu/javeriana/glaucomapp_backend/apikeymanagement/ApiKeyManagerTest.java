@@ -1,4 +1,4 @@
-package co.edu.javeriana.glaucomapp_backend.apikey;
+package co.edu.javeriana.glaucomapp_backend.apikeymanagement;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

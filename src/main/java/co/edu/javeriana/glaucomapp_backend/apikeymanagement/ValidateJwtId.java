@@ -1,4 +1,4 @@
-package co.edu.javeriana.glaucomapp_backend.apikey;
+package co.edu.javeriana.glaucomapp_backend.apikeymanagement;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

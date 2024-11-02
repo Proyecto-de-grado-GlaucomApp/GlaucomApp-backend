@@ -9,7 +9,7 @@ import org.mockito.Mock;
 import static org.mockito.Mockito.when;
 import org.mockito.MockitoAnnotations;
 
-import co.edu.javeriana.glaucomapp_backend.apikey.exposed.ApiKeyExternalService;
+import co.edu.javeriana.glaucomapp_backend.apikeymanagement.exposed.ApiKeyExternalService;
 import co.edu.javeriana.glaucomapp_backend.security.apikey.ClientAuthenticationHelper;
 
 class ClientAuthenticationHelperTest {

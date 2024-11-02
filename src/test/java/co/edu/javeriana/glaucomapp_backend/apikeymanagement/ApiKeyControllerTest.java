@@ -1,4 +1,4 @@
-package co.edu.javeriana.glaucomapp_backend.apikey;
+package co.edu.javeriana.glaucomapp_backend.apikeymanagement;
 
 import java.util.Collections;
 import java.util.List;
@@ -17,7 +17,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import co.edu.javeriana.glaucomapp_backend.apikey.exposed.ApiKeyDTO;
+import co.edu.javeriana.glaucomapp_backend.apikeymanagement.exposed.ApiKeyDTO;
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.ApiKeyAlreadyApprovedException;
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.ApiKeyAlreadyExistsException;
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.ApiKeyNotFoundException;

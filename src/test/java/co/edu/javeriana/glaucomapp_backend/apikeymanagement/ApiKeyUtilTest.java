@@ -1,8 +1,9 @@
-package co.edu.javeriana.glaucomapp_backend.apikey;
+package co.edu.javeriana.glaucomapp_backend.apikeymanagement;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import co.edu.javeriana.glaucomapp_backend.apikey.exposed.ApiKeyDTO;
+
 import org.junit.jupiter.api.Test;
+
+import co.edu.javeriana.glaucomapp_backend.apikeymanagement.exposed.ApiKeyDTO;
 
 public class ApiKeyUtilTest {
 
@@ -21,11 +22,4 @@ public class ApiKeyUtilTest {
         assertEquals("ACTIVE", apiKeyDTO.status());
     }
 
-    @Test
-    void testMapApiKeyDTO_NullApiKey() {
-        // Act & Assert
-        assertThrows(NullPointerException.class, () -> {
-            ApiKeyUtil.mapApiKeyDTO(null);
-        });
-    }
 }

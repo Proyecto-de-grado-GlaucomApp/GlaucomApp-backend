@@ -1,4 +1,4 @@
-package co.edu.javeriana.glaucomapp_backend.apikey;
+package co.edu.javeriana.glaucomapp_backend.apikeymanagement;
 
 public enum ApiKeyStatus {
     ACTIVE,           // The API key is active and can be used

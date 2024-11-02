@@ -1,7 +1,8 @@
-package co.edu.javeriana.glaucomapp_backend.apikey;
+package co.edu.javeriana.glaucomapp_backend.apikeymanagement;
 
 import java.util.List;
-import co.edu.javeriana.glaucomapp_backend.apikey.exposed.ApiKeyDTO;
+
+import co.edu.javeriana.glaucomapp_backend.apikeymanagement.exposed.ApiKeyDTO;
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.ApiKeyAlreadyApprovedException;
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.ApiKeyAlreadyExistsException;
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.ApiKeyNotFoundException;

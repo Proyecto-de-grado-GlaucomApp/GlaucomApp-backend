@@ -1,4 +1,4 @@
-package co.edu.javeriana.glaucomapp_backend.apikey.exposed;
+package co.edu.javeriana.glaucomapp_backend.apikeymanagement.exposed;
 
 /**
  * Data Transfer Object (DTO) representing an API key and its associated metadata.
