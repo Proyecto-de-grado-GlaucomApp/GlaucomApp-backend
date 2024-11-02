@@ -1,4 +1,4 @@
-package co.edu.javeriana.glaucomapp_backend.common.S3;
+package co.edu.javeriana.glaucomapp_backend.s3.exposed;
 import java.awt.image.BufferedImage;
 
 public interface  S3Service {

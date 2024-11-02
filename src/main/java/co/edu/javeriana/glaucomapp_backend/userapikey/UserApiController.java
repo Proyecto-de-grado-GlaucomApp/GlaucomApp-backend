@@ -91,7 +91,6 @@ public class UserApiController {
      * @return the updated UserApi object
      */
     @PutMapping("/{userId}/edit")
-    @ValidateJwtId(paramName = "userId")
     public UserApi editUser(@PathVariable Long userId, @RequestBody UserApiDTO userApi) {
         return userApiService.editUser(userId, userApi);
     }

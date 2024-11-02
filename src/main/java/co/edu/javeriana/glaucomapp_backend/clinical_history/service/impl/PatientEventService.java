@@ -30,7 +30,7 @@ import org.springframework.stereotype.Service;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.pacient.Pacient;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.repository.ExamRepository;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.repository.PacientRepository;
-import co.edu.javeriana.glaucomapp_backend.common.S3.S3Service;
+import co.edu.javeriana.glaucomapp_backend.s3.exposed.S3Service;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.modulith.events.ApplicationModuleListener;

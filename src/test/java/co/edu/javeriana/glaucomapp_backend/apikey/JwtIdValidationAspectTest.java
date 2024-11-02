@@ -1,14 +1,15 @@
-package co.edu.javeriana.glaucomapp_backend.userapikey;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
+package co.edu.javeriana.glaucomapp_backend.apikey;
 import org.aspectj.lang.ProceedingJoinPoint;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.when;
 import org.mockito.MockitoAnnotations;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
 import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.UnauthorizedException;
 import jakarta.servlet.http.HttpServletRequest;

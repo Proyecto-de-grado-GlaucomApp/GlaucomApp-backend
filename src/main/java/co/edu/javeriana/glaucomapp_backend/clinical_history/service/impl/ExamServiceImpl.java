@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
-
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.Exam;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.ExamRequest;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.ExamRes;
@@ -42,8 +41,7 @@ import co.edu.javeriana.glaucomapp_backend.clinical_history.repository.ExamRepos
 import co.edu.javeriana.glaucomapp_backend.clinical_history.repository.PacientRepository;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.service.ExamService;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.service.ReviewOphthalmologistEvent;
-import co.edu.javeriana.glaucomapp_backend.common.S3.S3Service;
-
+import co.edu.javeriana.glaucomapp_backend.s3.exposed.S3Service;
 import jakarta.transaction.Transactional;
 
 @Service

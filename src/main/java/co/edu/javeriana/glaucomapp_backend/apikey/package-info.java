@@ -1,4 +1,4 @@
 @org.springframework.modulith.ApplicationModule(
-    allowedDependencies = {"common", "userapikey"}
+    allowedDependencies = {"common"}
 )
 package co.edu.javeriana.glaucomapp_backend.apikey;

@@ -21,7 +21,6 @@ import co.edu.javeriana.glaucomapp_backend.common.exceptions.ApiKeyAlreadyExists
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.ApiKeyNotFoundException;
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.EmailAlreadyExistsException;
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.UnauthorizedException;
-import co.edu.javeriana.glaucomapp_backend.userapikey.ValidateJwtId;
 
 /**
  * Controller for managing API key operations such as generating and invalidating API keys.

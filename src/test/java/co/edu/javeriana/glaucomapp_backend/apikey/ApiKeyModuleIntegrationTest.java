@@ -12,15 +12,16 @@ import org.springframework.test.context.ActiveProfiles;
  * within the application context.
  * </p>
  */
-@ApplicationModuleTest
-@ActiveProfiles("test")
-public class ApiKeyModuleIntegrationTest {
+@ApplicationModuleTest(mode = ApplicationModuleTest.BootstrapMode.DIRECT_DEPENDENCIES)
+    @ActiveProfiles("test")
+    public class ApiKeyModuleIntegrationTest {
 
-    /**
-     * Verifies that the API Key module is correctly configured and initialized.
-     */
-    @Test
-    void verifyModule() {
+        
+        /**
+         * Verifies that the API Key module is correctly configured and initialized.
+         */
+        @Test
+        void verifyModule() {
 
+        }
     }
-}

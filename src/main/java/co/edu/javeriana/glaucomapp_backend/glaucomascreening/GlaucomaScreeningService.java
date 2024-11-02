@@ -36,7 +36,7 @@ import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import co.edu.javeriana.glaucomapp_backend.common.S3.S3Service;
+import co.edu.javeriana.glaucomapp_backend.s3.exposed.S3Service;
 
 @Service
 public class GlaucomaScreeningService {

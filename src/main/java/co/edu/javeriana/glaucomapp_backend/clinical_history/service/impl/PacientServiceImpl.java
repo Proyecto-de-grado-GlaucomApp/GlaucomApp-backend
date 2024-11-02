@@ -47,7 +47,7 @@ import co.edu.javeriana.glaucomapp_backend.clinical_history.repository.ExamRepos
 import co.edu.javeriana.glaucomapp_backend.clinical_history.repository.PacientRepository;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.service.PacientService;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.service.ReviewOphthalmologistEvent;
-import co.edu.javeriana.glaucomapp_backend.common.S3.S3Service;
+import co.edu.javeriana.glaucomapp_backend.s3.exposed.S3Service;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
