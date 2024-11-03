@@ -2,6 +2,7 @@ package co.edu.javeriana.glaucomapp_backend.apikeymanagement;
 
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 
 import co.edu.javeriana.glaucomapp_backend.apikeymanagement.exposed.ApiKeyDTO;
@@ -93,6 +94,13 @@ public class ApiKeyServiceImpl implements ApiKeyExternalService, ApiKeyInternalS
     @Override
     public ApiKeyDTO getApiKeyByUser(Long userId) {
         Optional<ApiKey> apiKey = apiKeyRepository.findByUserApiIdAndStatusIn(userId, List.of(ApiKeyStatus.PENDING, ApiKeyStatus.ACTIVE));
+        Optional<ApiKey> apiKeyInactive = apiKeyRepository.findByUserApiIdAndStatus(userId, ApiKeyStatus.INACTIVE);
+
+        if (apiKeyInactive.isPresent() && apiKey.isPresent()) {
+            return new ApiKeyDTO(apiKey.get().getApiKey(), apiKey.get().getStatus().toString());
+        } else if (apiKeyInactive.isPresent() && !apiKey.isPresent()) {
+            return new ApiKeyDTO(apiKeyInactive.get().getApiKey(), apiKeyInactive.get().getStatus().toString());
+        }
         if (apiKey.isEmpty()) {
             throw new ApiKeyNotFoundException("API key not found");
         }
@@ -109,7 +117,11 @@ public class ApiKeyServiceImpl implements ApiKeyExternalService, ApiKeyInternalS
     public void deleteApiKeyByUser(Long userId) {
         Optional<ApiKey> apiKey = apiKeyRepository.findByUserApiIdAndStatus(userId, ApiKeyStatus.PENDING);
         if (apiKey.isEmpty()) {
+            apiKey = apiKeyRepository.findByUserApiIdAndStatus(userId, ApiKeyStatus.ACTIVE);
+            if (apiKey.isEmpty()) {
+
             throw new ApiKeyNotFoundException("API key not found");
+            }
         }
         try {
             apiKeyRepository.deleteById(apiKey.get().getId());
@@ -156,6 +168,20 @@ public class ApiKeyServiceImpl implements ApiKeyExternalService, ApiKeyInternalS
             throw new ApiKeyAlreadyApprovedException("API Key al;ready approved");
         }
         apiKey.setStatus(ApiKeyStatus.ACTIVE);
+        return apiKeyRepository.save(apiKey);
+    }
+
+    @Override
+    public ApiKey denyApiKey(Long apiKeyId) {
+        ApiKey apiKey = apiKeyRepository.findById(apiKeyId).orElseThrow(() -> new ApiKeyNotFoundException("API Key not found"));
+        apiKey.setStatus(ApiKeyStatus.INACTIVE);
+
+        Long userId = apiKey.getUserApiId();
+        Optional<ApiKey> apiKeyInactive = apiKeyRepository.findByUserApiIdAndStatus(userId, ApiKeyStatus.INACTIVE);
+        if (apiKeyInactive.isPresent()) {
+            apiKeyRepository.delete(apiKeyInactive.get());
+        }
+
         return apiKeyRepository.save(apiKey);
     }
 }

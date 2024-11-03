@@ -74,4 +74,13 @@ public interface ApiKeyInternalService {
      * @throws ApiKeyAlreadyApprovedException if the API key is already approved
      */
     ApiKey approveApiKey(Long apiKeyId);
+
+    /**
+     * Denies the specified API key.
+     *
+     * @param apiKeyId the ID of the API key to deny
+     * @return the denied ApiKey
+     * @throws ApiKeyNotFoundException if the API key is not found
+     */
+    ApiKey denyApiKey(Long apiKeyId);
 }

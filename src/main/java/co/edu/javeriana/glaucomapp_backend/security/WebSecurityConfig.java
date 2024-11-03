@@ -221,7 +221,7 @@ public class WebSecurityConfig {
         .csrf(csrf -> csrf.disable()) // Desactivar CSRF si usas JWT
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            .securityMatcher("/api/v1/api-keys/**")// Esta es la base de los endpoints
+            .securityMatcher("/api/v1/api-keys")// Esta es la base de los endpoints
 
             .authorizeHttpRequests(authorize -> 
                 authorize

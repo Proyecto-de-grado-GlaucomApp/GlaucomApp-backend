@@ -66,7 +66,9 @@ public class ApiKeyController {
     @GetMapping("/users/{userId}")
     @ValidateJwtId(paramName = "userId")
     public ResponseEntity<ApiKeyDTO> getApiKey(@PathVariable Long userId) {
+        System.out.println("getApiKey:  " + userId);
         ApiKeyDTO apiKeyDTO = apiKeyService.getApiKeyByUser(userId);
+        System.out.println("getApiKey:  " + apiKeyDTO);
         return ResponseEntity.ok(apiKeyDTO); // Return 200 OK
     }
 
@@ -96,6 +98,13 @@ public class ApiKeyController {
         return ResponseEntity.ok(apiKey); // Return 200 OK
     }
 
+
+    @PutMapping("/{apiKeyId}/deny")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<ApiKey> denyApiKey(@PathVariable Long apiKeyId) {
+        ApiKey apiKey = apiKeyService.denyApiKey(apiKeyId);
+        return ResponseEntity.ok(apiKey); // Return 200 OK
+    }
     /**
      * Endpoint to list all pending API keys.
      *
