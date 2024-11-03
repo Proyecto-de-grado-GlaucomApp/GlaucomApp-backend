@@ -28,7 +28,7 @@
  * - validateAuthToken(String authHeader): Validates the authentication token.
  * - isNullOrEmpty(String str): Checks if a string is null or empty.
  */
-package co.edu.javeriana.glaucomapp_backend.auth.service.impl;
+package co.edu.javeriana.glaucomapp_backend.mobileauth.service.impl;
 
 import java.util.UUID;
 
@@ -41,11 +41,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import co.edu.javeriana.glaucomapp_backend.auth.exposed.MyUser;
-import co.edu.javeriana.glaucomapp_backend.auth.model.LogInForm;
-import co.edu.javeriana.glaucomapp_backend.auth.repository.DoctorEventService;
-import co.edu.javeriana.glaucomapp_backend.auth.repository.MyUserRepository;
-import co.edu.javeriana.glaucomapp_backend.auth.service.AuthService;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.exposed.MyUser;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.model.LogInForm;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.repository.DoctorEventService;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.repository.MyUserRepository;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.service.AuthService;
 import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.UnauthorizedException;
 import jakarta.servlet.http.Cookie;

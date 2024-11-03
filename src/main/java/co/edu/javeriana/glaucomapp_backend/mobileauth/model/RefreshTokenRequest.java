@@ -4,7 +4,7 @@
  *
  * @param refreshToken the refresh token used to obtain a new access token
  */
-package co.edu.javeriana.glaucomapp_backend.auth.model;
+package co.edu.javeriana.glaucomapp_backend.mobileauth.model;
 
 
 public record RefreshTokenRequest (String refreshToken){

@@ -2,12 +2,12 @@
  * AuthService interface provides methods for user authentication and account management.
  * It includes methods for user registration, login, logout, token refresh, and account closure.
  */
-package co.edu.javeriana.glaucomapp_backend.auth.service;
+package co.edu.javeriana.glaucomapp_backend.mobileauth.service;
 
 import org.springframework.stereotype.Service;
 
-import co.edu.javeriana.glaucomapp_backend.auth.exposed.MyUser;
-import co.edu.javeriana.glaucomapp_backend.auth.model.LogInForm;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.exposed.MyUser;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.model.LogInForm;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Service

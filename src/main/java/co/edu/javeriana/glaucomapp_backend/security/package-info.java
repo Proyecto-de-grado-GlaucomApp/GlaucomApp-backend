@@ -1,7 +1,7 @@
 @org.springframework.modulith.ApplicationModule(
     allowedDependencies = {"apikeymanagement::exposed",
                            "common",
-                        "auth::exposed"}
+                        "mobileauth::exposed"}
 )
 /**
  * Security module configuration for the GlaucomApp backend.

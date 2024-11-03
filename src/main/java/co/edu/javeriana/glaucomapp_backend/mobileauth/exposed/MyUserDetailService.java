@@ -27,7 +27,7 @@
  * Exceptions:
  * - UsernameNotFoundException: Thrown if the user is not found in the database.
  */
-package co.edu.javeriana.glaucomapp_backend.auth.exposed;
+package co.edu.javeriana.glaucomapp_backend.mobileauth.exposed;
 
 import java.util.Optional;
 
@@ -38,7 +38,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import co.edu.javeriana.glaucomapp_backend.auth.repository.MyUserRepository;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.repository.MyUserRepository;
 import jakarta.transaction.Transactional;
 
 

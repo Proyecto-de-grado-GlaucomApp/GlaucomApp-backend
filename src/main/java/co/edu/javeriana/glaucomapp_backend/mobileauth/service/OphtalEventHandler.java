@@ -21,13 +21,13 @@
  * @param ophtalId The ID of the ophthalmologist as a String.
  * @throws IllegalArgumentException if the ophthalmologist ID is invalid.
  */
-package co.edu.javeriana.glaucomapp_backend.auth.service;
+package co.edu.javeriana.glaucomapp_backend.mobileauth.service;
 
 import java.util.UUID;
 import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Service;
 
-import co.edu.javeriana.glaucomapp_backend.auth.repository.MyUserRepository;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.repository.MyUserRepository;
 import lombok.RequiredArgsConstructor;
 
 @Service

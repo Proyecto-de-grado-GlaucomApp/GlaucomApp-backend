@@ -1,6 +1,6 @@
 @org.springframework.modulith.ApplicationModule(
     type = Type.OPEN,
-    allowedDependencies = {"auth::exposed"}
+    allowedDependencies = {"mobileauth::exposed"}
 )
 package co.edu.javeriana.glaucomapp_backend.common;
 

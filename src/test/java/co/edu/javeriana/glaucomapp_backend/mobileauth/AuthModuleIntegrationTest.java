@@ -1,4 +1,4 @@
-package co.edu.javeriana.glaucomapp_backend.auth;
+package co.edu.javeriana.glaucomapp_backend.mobileauth;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.modulith.test.ApplicationModuleTest;

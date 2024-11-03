@@ -15,7 +15,7 @@
  * 
  * @see AuthService
  */
-package co.edu.javeriana.glaucomapp_backend.auth.controller;
+package co.edu.javeriana.glaucomapp_backend.mobileauth.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -25,10 +25,10 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import co.edu.javeriana.glaucomapp_backend.auth.exposed.MyUser;
-import co.edu.javeriana.glaucomapp_backend.auth.model.LogInForm;
-import co.edu.javeriana.glaucomapp_backend.auth.model.RefreshTokenRequest;
-import co.edu.javeriana.glaucomapp_backend.auth.service.AuthService;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.exposed.MyUser;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.model.LogInForm;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.model.RefreshTokenRequest;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
 
 @RequestMapping("mobile/auth")

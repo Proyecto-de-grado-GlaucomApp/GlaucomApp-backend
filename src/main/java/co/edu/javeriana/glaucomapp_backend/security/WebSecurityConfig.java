@@ -18,8 +18,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import co.edu.javeriana.glaucomapp_backend.auth.exposed.MyUserDetailService;
 import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.exposed.MyUserDetailService;
 import co.edu.javeriana.glaucomapp_backend.security.apikey.ClientAuthenticationHelper;
 import co.edu.javeriana.glaucomapp_backend.security.filter.ApiKeyFilter;
 import co.edu.javeriana.glaucomapp_backend.security.filter.JwtAuthenticationFilter;

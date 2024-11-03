@@ -10,7 +10,7 @@
  * - IllegalArgumentException: Returns a 400 BAD REQUEST status with the error message.
  * - Exception: Returns a 500 INTERNAL SERVER ERROR status with a generic error message.
  */
-package co.edu.javeriana.glaucomapp_backend.auth.Exception;
+package co.edu.javeriana.glaucomapp_backend.mobileauth.Exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

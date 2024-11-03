@@ -31,8 +31,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import co.edu.javeriana.glaucomapp_backend.auth.exposed.MyUser;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.pacient.Pacient;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.exposed.MyUser;
 import jakarta.transaction.Transactional;
 
 import java.util.List;

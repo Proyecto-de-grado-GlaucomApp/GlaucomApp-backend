@@ -24,7 +24,7 @@
  * Overrides:
  * - toString: Provides a string representation of the user object.
  */
-package co.edu.javeriana.glaucomapp_backend.auth.exposed;
+package co.edu.javeriana.glaucomapp_backend.mobileauth.exposed;
 
 import java.util.UUID;
 

@@ -32,9 +32,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
- 
-import co.edu.javeriana.glaucomapp_backend.auth.exposed.MyUserDetailService;
+
 import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.exposed.MyUserDetailService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
