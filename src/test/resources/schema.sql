@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS ophthal_user;
 CREATE TABLE ophthal_user (
     ophtal_id UUID  PRIMARY KEY,
     username VARCHAR(255) NOT NULL UNIQUE,
