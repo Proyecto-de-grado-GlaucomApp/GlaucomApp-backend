@@ -14,6 +14,9 @@ import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.MockitoAnnotations;
 
@@ -211,6 +214,31 @@ public class ApiKeyServiceImplTest {
         assertNotNull(exception); // Check if the exception is thrown
     }
 
+    @Test
+public void testDeleteApiKeyByUserThrowsExceptionOnDeleteFailure() {
+    // Arrange
+    Long userId = 1L; // ID del usuario para el cual se eliminará la clave API
+    ApiKey pendingApiKey = new ApiKey();
+    pendingApiKey.setId(1L); // ID de la clave API pendiente
+    pendingApiKey.setUserApiId(userId);
+    pendingApiKey.setStatus(ApiKeyStatus.PENDING);
+    
+    // Mock para retornar la clave API pendiente
+    when(apiKeyRepository.findByUserApiIdAndStatus(userId, ApiKeyStatus.PENDING)).thenReturn(Optional.of(pendingApiKey));
+    
+    // Simular que se lanza una excepción al intentar eliminar la clave API
+    doThrow(new RuntimeException("Deletion failed")).when(apiKeyRepository).deleteById(pendingApiKey.getId());
+
+    // Act & Assert
+    ApiKeyNotFoundException exception = assertThrows(ApiKeyNotFoundException.class, () -> {
+        apiKeyService.deleteApiKeyByUser(userId); // Llama al método deleteApiKeyByUser
+    });
+
+    assertNotNull(exception); // Verifica que la excepción es lanzada
+    assertEquals("API key not found for user", exception.getMessage()); // Verifica el mensaje de la excepción
+}
+
+
     // Test approving an API key that is already active
     @Test
     public void testApproveAlreadyActiveApiKey() {
@@ -346,5 +374,151 @@ public class ApiKeyServiceImplTest {
         });
         assertNotNull(exception); // Check if the exception is thrown
     }
+
+    // Test denying an existing API key successfully
+    @Test
+    public void testDenyApiKeySuccess() {
+        // Arrange
+        Long apiKeyId = 1L;
+        ApiKey activeApiKey = new ApiKey();
+        activeApiKey.setId(apiKeyId);
+        activeApiKey.setStatus(ApiKeyStatus.ACTIVE);
+        when(apiKeyRepository.findById(apiKeyId)).thenReturn(Optional.of(activeApiKey));
+        when(apiKeyRepository.save(any(ApiKey.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        ApiKey result = apiKeyService.denyApiKey(apiKeyId);
+
+        // Assert
+        assertEquals(ApiKeyStatus.INACTIVE, result.getStatus());
+        verify(apiKeyRepository).save(activeApiKey);
+       }
+    
+
+// Test denying a non-existing API key should throw an exception
+@Test
+public void testDenyApiKeyNotFound() {
+    // Arrange
+    Long apiKeyId = 1L; // Sample API key ID for testing
+    // Mock repository to return empty Optional
+    when(apiKeyRepository.findById(apiKeyId)).thenReturn(Optional.empty());
+
+    // Act & Assert
+    ApiKeyNotFoundException exception = assertThrows(ApiKeyNotFoundException.class, () -> {
+        apiKeyService.denyApiKey(apiKeyId); // Call the method to deny the API key
+    });
+    assertNotNull(exception); // Check if the exception is thrown
+}
+
+
+@Test
+public void testDenyApiKeyAndDeleteInactive() {
+    // Arrange
+    Long apiKeyId = 1L; // ID de la clave API activa
+    ApiKey activeApiKey = new ApiKey();
+    activeApiKey.setId(apiKeyId);
+    activeApiKey.setStatus(ApiKeyStatus.ACTIVE);
+    Long userId = 2L; // ID del usuario asociado a la clave API
+    activeApiKey.setUserApiId(userId); // Asociar el usuario a la clave API activa
+
+    // Mock para retornar la clave API activa
+    when(apiKeyRepository.findById(apiKeyId)).thenReturn(Optional.of(activeApiKey));
+
+    // Crear y mockear la clave API inactiva
+    ApiKey inactiveApiKey = new ApiKey();
+    inactiveApiKey.setId(3L); // ID de la clave API inactiva
+    inactiveApiKey.setUserApiId(userId);
+    inactiveApiKey.setStatus(ApiKeyStatus.INACTIVE);
+    
+    // Mock para encontrar la clave API inactiva
+    when(apiKeyRepository.findByUserApiIdAndStatus(userId, ApiKeyStatus.INACTIVE))
+        .thenReturn(Optional.of(inactiveApiKey));
+
+    // Mock para el método save
+    when(apiKeyRepository.save(any(ApiKey.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+    // Act
+    ApiKey result = apiKeyService.denyApiKey(apiKeyId); // Llama al método denyApiKey
+
+    // Assert
+    assertEquals(ApiKeyStatus.INACTIVE, result.getStatus()); // Verifica que el estado es INACTIVE
+    verify(apiKeyRepository).delete(inactiveApiKey); // Verifica que se eliminó la clave API inactiva
+    verify(apiKeyRepository).save(activeApiKey); // Verifica que se guardó la clave API activa
+}
+
+// Test cuando hay una clave API activa y una inactiva
+@Test
+public void testGetApiKeyByUserWithActiveAndInactiveKeys() {
+    // Arrange
+    Long userId = 1L; // ID del usuario
+    ApiKey activeApiKey = new ApiKey();
+    activeApiKey.setApiKey("active-key");
+    activeApiKey.setStatus(ApiKeyStatus.ACTIVE);
+    activeApiKey.setUserApiId(userId);
+    
+    ApiKey inactiveApiKey = new ApiKey();
+    inactiveApiKey.setApiKey("inactive-key");
+    inactiveApiKey.setStatus(ApiKeyStatus.INACTIVE);
+    inactiveApiKey.setUserApiId(userId);
+    
+    // Mocks
+    when(apiKeyRepository.findByUserApiIdAndStatusIn(userId, List.of(ApiKeyStatus.PENDING, ApiKeyStatus.ACTIVE)))
+        .thenReturn(Optional.of(activeApiKey));
+    when(apiKeyRepository.findByUserApiIdAndStatus(userId, ApiKeyStatus.INACTIVE))
+        .thenReturn(Optional.of(inactiveApiKey));
+
+    // Act
+    ApiKeyDTO result = apiKeyService.getApiKeyByUser(userId); // Llama al método
+
+    // Assert
+    assertNotNull(result);
+    assertEquals("active-key", result.apiKey());
+    assertEquals(ApiKeyStatus.ACTIVE.toString(), result.status());
+}
+
+// Test cuando solo hay una clave API inactiva
+@Test
+public void testGetApiKeyByUserWithOnlyInactiveKey() {
+    // Arrange
+    Long userId = 1L; // ID del usuario
+    ApiKey inactiveApiKey = new ApiKey();
+    inactiveApiKey.setApiKey("inactive-key");
+    inactiveApiKey.setStatus(ApiKeyStatus.INACTIVE);
+    inactiveApiKey.setUserApiId(userId);
+    
+    // Mocks
+    when(apiKeyRepository.findByUserApiIdAndStatusIn(userId, List.of(ApiKeyStatus.PENDING, ApiKeyStatus.ACTIVE)))
+        .thenReturn(Optional.empty());
+    when(apiKeyRepository.findByUserApiIdAndStatus(userId, ApiKeyStatus.INACTIVE))
+        .thenReturn(Optional.of(inactiveApiKey));
+
+    // Act
+    ApiKeyDTO result = apiKeyService.getApiKeyByUser(userId); // Llama al método
+
+    // Assert
+    assertNotNull(result);
+    assertEquals("inactive-key", result.apiKey());
+    assertEquals(ApiKeyStatus.INACTIVE.toString(), result.status());
+}
+
+// Test cuando no hay claves API
+@Test
+public void testGetApiKeyByUserNotFound() {
+    // Arrange
+    Long userId = 1L; // ID del usuario
+    // Mocks para no encontrar claves API
+    when(apiKeyRepository.findByUserApiIdAndStatusIn(userId, List.of(ApiKeyStatus.PENDING, ApiKeyStatus.ACTIVE)))
+        .thenReturn(Optional.empty());
+    when(apiKeyRepository.findByUserApiIdAndStatus(userId, ApiKeyStatus.INACTIVE))
+        .thenReturn(Optional.empty());
+
+    // Act & Assert
+    ApiKeyNotFoundException exception = assertThrows(ApiKeyNotFoundException.class, () -> {
+        apiKeyService.getApiKeyByUser(userId); // Llama al método
+    });
+
+    assertNotNull(exception); // Verifica que la excepción es lanzada
+    assertEquals("API key not found", exception.getMessage()); // Verifica el mensaje de la excepción
+}
 
 }
