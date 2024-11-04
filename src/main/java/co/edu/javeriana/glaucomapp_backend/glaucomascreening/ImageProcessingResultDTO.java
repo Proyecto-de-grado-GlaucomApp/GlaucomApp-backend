@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
         Double neuroretinalRimArea;
         Double excavationPerimeter;
         Double excavationArea;
-        String state;
+        int state;
         int ddlStage;
 
 }
