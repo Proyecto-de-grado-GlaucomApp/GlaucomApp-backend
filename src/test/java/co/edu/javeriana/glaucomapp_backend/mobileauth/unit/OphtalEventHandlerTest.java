@@ -2,7 +2,7 @@ package co.edu.javeriana.glaucomapp_backend.mobileauth.unit;
 
 import co.edu.javeriana.glaucomapp_backend.mobileauth.exposed.MyUser;
 import co.edu.javeriana.glaucomapp_backend.mobileauth.repository.MyUserRepository;
-import co.edu.javeriana.glaucomapp_backend.mobileauth.service.OphtalEventHandler;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.service.OphtalEventListener;
 
 import org.mockito.InjectMocks;
 import org.mockito.MockitoAnnotations;
@@ -26,7 +26,7 @@ public class OphtalEventHandlerTest {
     private MyUserRepository userRepository;
 
     @InjectMocks
-    private OphtalEventHandler ophtalEventHandler;
+    private OphtalEventListener ophtalEventHandler;
 
     @BeforeEach
     public void setUp() {
@@ -34,7 +34,7 @@ public class OphtalEventHandlerTest {
     }
 
     private Object invokePrivateMethod(String methodName, Object instance, Object... args) throws Exception {
-        Method method = OphtalEventHandler.class.getDeclaredMethod(methodName, String.class);
+        Method method = OphtalEventListener.class.getDeclaredMethod(methodName, String.class);
         method.setAccessible(true);
         return method.invoke(instance, args);
     }

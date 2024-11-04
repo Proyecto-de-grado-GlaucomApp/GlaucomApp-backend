@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Service;
 
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.pacient.Pacient;
@@ -33,12 +34,10 @@ import co.edu.javeriana.glaucomapp_backend.clinical_history.repository.PacientRe
 import co.edu.javeriana.glaucomapp_backend.s3.exposed.S3Service;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.modulith.events.ApplicationModuleListener;
-
 
 @Service
 @RequiredArgsConstructor
-public class PatientEventService {
+public class PatientEventListener {
 
     private final PacientRepository pacientRepository;
     private final ExamRepository examRepository;
