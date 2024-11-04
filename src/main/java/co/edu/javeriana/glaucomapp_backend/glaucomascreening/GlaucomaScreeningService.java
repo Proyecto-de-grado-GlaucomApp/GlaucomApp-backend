@@ -213,12 +213,12 @@ public class GlaucomaScreeningService {
         }
     }
 
-    public String calculateState(int ddlsStage){
+    public int calculateState(int ddlsStage){
         return switch (ddlsStage) {
-            case 1,2,3,4 -> GlaucomaStatus.AT_RISK.getDescription();
-            case 5,6,7 -> GlaucomaStatus.GLAUCOMA_DAMAGE.getDescription();
-            case 8,9,10 -> GlaucomaStatus.GLAUCOMA_DISABILITY.getDescription();
-            default -> "Unknown";
+            case 1,2,3,4 -> GlaucomaStatus.AT_RISK.getCode();
+            case 5,6,7 -> GlaucomaStatus.GLAUCOMA_DAMAGE.getCode();
+            case 8,9,10 -> GlaucomaStatus.GLAUCOMA_DISABILITY.getCode();
+            default -> 0;
         };
     }
 
