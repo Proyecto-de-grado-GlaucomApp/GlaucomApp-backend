@@ -2,7 +2,6 @@ package co.edu.javeriana.glaucomapp_backend.glaucomascreening;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,16 +10,18 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 
 @RestController
 @Slf4j
 @RequestMapping("/mobile/glaucoma-screening")
+@RequiredArgsConstructor
 public class GlaucomaScreeningMobileController {
 
-        @Autowired
-        private GlaucomaScreeningService glaucomaScreeningService;
+
+        private final GlaucomaScreeningService glaucomaScreeningService;
 
                 private static final Logger logger = LoggerFactory.getLogger(GlaucomaScreeningService.class);
 
