@@ -248,4 +248,33 @@ class ApiKeyControllerTest {
         assertEquals("An error occurred: Some error", response.getBody()); // Verify response body
     }
 
+
+    @Test
+void denyApiKey_ShouldReturnOkResponse_WhenApiKeyIsDenied() {
+    // Arrange
+    Long apiKeyId = 1L;
+    ApiKey mockApiKey = new ApiKey(); // Mock o instancia tu objeto ApiKey
+    when(apiKeyService.denyApiKey(apiKeyId)).thenReturn(mockApiKey);
+
+    // Act
+    ResponseEntity<ApiKey> response = apiKeyController.denyApiKey(apiKeyId);
+
+    // Assert
+    assertEquals(HttpStatus.OK, response.getStatusCode()); // Verifica el estado de la respuesta
+    assertEquals(mockApiKey, response.getBody()); // Verifica el cuerpo de la respuesta
+}
+
+@Test
+void denyApiKey_ShouldThrowApiKeyNotFoundException_WhenApiKeyDoesNotExist() {
+    // Arrange
+    Long apiKeyId = 1L;
+    doThrow(new ApiKeyNotFoundException("API Key not found")).when(apiKeyService).denyApiKey(apiKeyId);
+
+    // Act & Assert
+    Exception exception = assertThrows(ApiKeyNotFoundException.class, () -> {
+        apiKeyController.denyApiKey(apiKeyId);
+    });
+    assertEquals("API Key not found", exception.getMessage()); // Verifica el mensaje de excepción
+}
+
 }
