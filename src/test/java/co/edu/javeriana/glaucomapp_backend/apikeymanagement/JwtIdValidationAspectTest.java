@@ -1,4 +1,5 @@
 package co.edu.javeriana.glaucomapp_backend.apikeymanagement;
+
 import org.aspectj.lang.ProceedingJoinPoint;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,8 +14,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.UnauthorizedException;
 import jakarta.servlet.http.HttpServletRequest;
-
-
 
 public class JwtIdValidationAspectTest {
 
@@ -37,56 +36,35 @@ public class JwtIdValidationAspectTest {
     }
 
     @Test
-    void testValidateJwtId_ValidJwtMatchingUserId() throws Throwable {
+    void testValidateJwtId() throws Throwable {
         String token = "validToken";
-        Long userId = 1L;
+        Long validUserId = 1L;
+        Long nonMatchingUserId = 2L;
 
+        // Valid JWT matching user ID
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtUtil.extractSubject(token)).thenReturn(String.valueOf(userId));
+        when(jwtUtil.extractSubject(token)).thenReturn(String.valueOf(validUserId));
         when(jwtUtil.extractRole(token)).thenReturn("USER");
+        
+        jwtIdValidationAspect.validateJwtId(joinPoint, null, validUserId); // No exception expected
 
-        jwtIdValidationAspect.validateJwtId(joinPoint, null, userId);
-
-        // Verify that the original method is called
-        // No exception should be thrown
-    }
-
-    @Test
-    void testValidateJwtId_ValidJwtNonMatchingUserId() throws Throwable {
-        String token = "validToken";
-        Long userId = 1L;
-
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtUtil.extractSubject(token)).thenReturn("2");
-        when(jwtUtil.extractRole(token)).thenReturn("USER");
-
+        // Valid JWT non-matching user ID
+        when(jwtUtil.extractSubject(token)).thenReturn(String.valueOf(nonMatchingUserId));
+        
         assertThrows(UnauthorizedException.class, () -> {
-            jwtIdValidationAspect.validateJwtId(joinPoint, null, userId);
+            jwtIdValidationAspect.validateJwtId(joinPoint, null, validUserId);
         });
-    }
 
-    @Test
-    void testValidateJwtId_ValidJwtAdminRole() throws Throwable {
-        String token = "validToken";
-        Long userId = 1L;
-
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtUtil.extractSubject(token)).thenReturn("2");
+        // Valid JWT with ADMIN role
         when(jwtUtil.extractRole(token)).thenReturn("ADMIN");
+        
+        jwtIdValidationAspect.validateJwtId(joinPoint, null, validUserId); // No exception expected
 
-        jwtIdValidationAspect.validateJwtId(joinPoint, null, userId);
-
-        // Verify that the original method is called
-        // No exception should be thrown
-    }
-
-    @Test
-    void testValidateJwtId_InvalidJwt() throws Throwable {
+        // Invalid JWT
         when(request.getHeader("Authorization")).thenReturn(null); // Simulate no Authorization header
-    
+        
         assertThrows(UnauthorizedException.class, () -> {
-            jwtIdValidationAspect.validateJwtId(joinPoint, null, 1L);
+            jwtIdValidationAspect.validateJwtId(joinPoint, null, validUserId);
         });
     }
-    
 }

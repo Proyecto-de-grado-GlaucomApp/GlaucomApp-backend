@@ -10,8 +10,6 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-
-
 @SpringBootTest
 @ActiveProfiles("test")
 public class RoleRepositoryTest {
@@ -25,22 +23,18 @@ public class RoleRepositoryTest {
     }
 
     @Test
-    void testFindByRole_Exists() {
-        Role role = new Role();
-        role.setRole(RoleEnum.USER);
-        when(roleRepository.findByRole(RoleEnum.USER)).thenReturn(role);
+    void testFindByRole() {
+        Role userRole = new Role();
+        userRole.setRole(RoleEnum.USER);
+        when(roleRepository.findByRole(RoleEnum.USER)).thenReturn(userRole);
+        
+        // Test for existing role
+        Role foundUserRole = roleRepository.findByRole(RoleEnum.USER);
+        assertEquals(RoleEnum.USER, foundUserRole.getRole(), "Expected role should be USER");
 
-        Role foundRole = roleRepository.findByRole(RoleEnum.USER);
-
-        assertEquals(RoleEnum.USER, foundRole.getRole());
-    }
-
-    @Test
-    void testFindByRole_NotExists() {
+        // Test for non-existing role
         when(roleRepository.findByRole(RoleEnum.ADMIN)).thenReturn(null);
-
-        Role foundRole = roleRepository.findByRole(RoleEnum.ADMIN);
-
-        assertNull(foundRole);
+        Role foundAdminRole = roleRepository.findByRole(RoleEnum.ADMIN);
+        assertNull(foundAdminRole, "Expected role should be null for ADMIN");
     }
 }

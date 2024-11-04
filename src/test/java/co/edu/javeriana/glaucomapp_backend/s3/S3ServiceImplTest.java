@@ -4,19 +4,14 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -53,19 +48,12 @@ public class S3ServiceImplTest {
 
     @Test
     void generatePresignedUrl_Success() throws Exception {
-        // Arrange
-        String objectKey = TEST_FILE_NAME;
-        URL expectedUrl = new URL(TEST_URL);
         PresignedGetObjectRequest presignedRequest = mock(PresignedGetObjectRequest.class);
-        
-        when(presignedRequest.url()).thenReturn(expectedUrl);
-        when(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class)))
-            .thenReturn(presignedRequest);
+        when(presignedRequest.url()).thenReturn(new URL(TEST_URL));
+        when(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class))).thenReturn(presignedRequest);
 
-        // Act
-        String result = s3Service.generatePresignedUrl(objectKey);
+        String result = s3Service.generatePresignedUrl(TEST_FILE_NAME);
 
-        // Assert
         assertNotNull(result);
         assertEquals(TEST_URL, result);
         verify(s3Presigner).presignGetObject(any(GetObjectPresignRequest.class));
@@ -73,42 +61,32 @@ public class S3ServiceImplTest {
 
     @Test
     void uploadImage_Success() throws IOException {
-        // Arrange
         BufferedImage testImage = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
         S3Utilities s3Utilities = mock(S3Utilities.class);
         when(s3Client.utilities()).thenReturn(s3Utilities);
         when(s3Utilities.getUrl(any(GetUrlRequest.class))).thenReturn(new URL(TEST_URL));
-        
-        // Act
+
         String result = s3Service.uploadImage(testImage, TEST_FILE_NAME);
 
-        // Assert
         assertNotNull(result);
         assertEquals(TEST_URL, result);
         verify(s3Client).putObject(any(PutObjectRequest.class), any(RequestBody.class));
     }
 
-
     @Test
     void deleteImage_Success() {
-        // Act
         String result = s3Service.deleteImage(TEST_FILE_NAME);
 
-        // Assert
         assertEquals("File deleted successfully: " + TEST_FILE_NAME, result);
         verify(s3Client).deleteObject(any(DeleteObjectRequest.class));
     }
 
     @Test
     void deleteImage_Failure() {
-        // Arrange
-        doThrow(new RuntimeException("Delete failed"))
-            .when(s3Client).deleteObject(any(DeleteObjectRequest.class));
+        doThrow(new RuntimeException("Delete failed")).when(s3Client).deleteObject(any(DeleteObjectRequest.class));
 
-        // Act
         String result = s3Service.deleteImage(TEST_FILE_NAME);
 
-        // Assert
         assertTrue(result.startsWith("Error deleting file:"));
         verify(s3Client).deleteObject(any(DeleteObjectRequest.class));
     }

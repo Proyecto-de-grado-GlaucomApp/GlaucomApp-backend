@@ -2,27 +2,20 @@ package co.edu.javeriana.glaucomapp_backend.security.filter;
 
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.*;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.boot.autoconfigure.pulsar.PulsarProperties.Authentication;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import co.edu.javeriana.glaucomapp_backend.security.apikey.ClientAuthenticationHelper;
-import co.edu.javeriana.glaucomapp_backend.security.filter.ApiKeyFilter;
 
 import java.io.IOException;
 
@@ -42,16 +35,15 @@ class ApiKeyFilterTest {
 
     private ApiKeyFilter apiKeyFilter;
 
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext(); // Limpia el contexto de seguridad
-    }
-
-
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         apiKeyFilter = new ApiKeyFilter(authServiceHelper);
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext(); // Limpia el contexto de seguridad
     }
 
     @Test
@@ -68,9 +60,11 @@ class ApiKeyFilterTest {
     }
 
     @Test
-    void doFilter_ShouldReturnUnauthorized_WhenApiKeyIsMissing() throws IOException, ServletException {
+    void doFilter_ShouldReturnUnauthorized_WhenApiKeyIsMissingOrInvalid() throws IOException, ServletException {
         // Arrange
         when(httpRequest.getRequestURI()).thenReturn("/api/v1/glaucoma-screening");
+
+        // Test missing API key
         when(httpRequest.getHeader("X-API-KEY")).thenReturn(null);
 
         // Act
@@ -79,13 +73,9 @@ class ApiKeyFilterTest {
         // Assert
         verify(httpResponse).sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid API Key"); // Verifica respuesta de error
         verify(chain, never()).doFilter(httpRequest, httpResponse); // No debe continuar en la cadena
-    }
 
-    @Test
-    void doFilter_ShouldReturnUnauthorized_WhenApiKeyIsInvalid() throws IOException, ServletException {
-        // Arrange
+        // Test invalid API key
         String invalidApiKey = "invalid-api-key";
-        when(httpRequest.getRequestURI()).thenReturn("/api/v1/glaucoma-screening");
         when(httpRequest.getHeader("X-API-KEY")).thenReturn(invalidApiKey);
         when(authServiceHelper.validateApiKey(invalidApiKey)).thenReturn(false);
 
@@ -93,7 +83,7 @@ class ApiKeyFilterTest {
         apiKeyFilter.doFilter(httpRequest, httpResponse, chain);
 
         // Assert
-        verify(httpResponse).sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid API Key"); // Verifica respuesta de error
+        verify(httpResponse, times(2)).sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid API Key");
         verify(chain, never()).doFilter(httpRequest, httpResponse); // No debe continuar en la cadena
     }
 
@@ -107,8 +97,8 @@ class ApiKeyFilterTest {
 
         // Act
         apiKeyFilter.doFilter(httpRequest, httpResponse, chain);
-        // Assert
 
+        // Assert
         verify(chain).doFilter(httpRequest, httpResponse); // Verifica que se llama a la cadena
         verify(authServiceHelper).validateApiKey(validApiKey); // Verifica que se validó la API key
         assertNotNull(SecurityContextHolder.getContext().getAuthentication()); // Verifica que la autenticación está establecida

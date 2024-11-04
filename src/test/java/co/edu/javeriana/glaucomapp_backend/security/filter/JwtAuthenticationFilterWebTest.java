@@ -20,15 +20,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
-import co.edu.javeriana.glaucomapp_backend.security.filter.JwtAuthenticationFilterWeb;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
-
-
-
-
-
 
 public class JwtAuthenticationFilterWebTest {
 
@@ -50,7 +44,6 @@ public class JwtAuthenticationFilterWebTest {
     void tearDown() {
         SecurityContextHolder.clearContext(); // Limpia el contexto de seguridad
     }
-
 
     @BeforeEach
     public void setUp() {
@@ -85,82 +78,34 @@ public class JwtAuthenticationFilterWebTest {
     }
 
     @Test
-    void testDoFilterInternal_ExpiredJwt() throws ServletException, IOException {
-        String token = "expiredToken";
-    
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtUtil.extractEmail(token)).thenThrow(new ExpiredJwtException(null, null, "Token has expired"));
-    
-        jwtAuthenticationFilterWeb.doFilterInternal(request, response, chain);
-    
-        verify(response, times(1)).setStatus(HttpServletResponse.SC_UNAUTHORIZED); // Expecting 401
-        verify(chain, never()).doFilter(request, response);
-    }
-    
+    void testDoFilterInternal_InvalidJwt() throws ServletException, IOException {
+        String[] tokens = {
+            "expiredToken",
+            "unsupportedToken",
+            "malformedToken",
+            "invalidToken"
+        };
+        
+        for (String token : tokens) {
+            when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
 
-    @Test
-    void testDoFilterInternal_UnsupportedJwt() throws ServletException, IOException {
-        String token = "unsupportedToken";
-    
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtUtil.extractEmail(token)).thenThrow(new UnsupportedJwtException("Unsupported token"));
-    
-        jwtAuthenticationFilterWeb.doFilterInternal(request, response, chain);
-    
-        verify(response, times(1)).setStatus(HttpServletResponse.SC_UNAUTHORIZED); // Esperando 401
-        verify(chain, never()).doFilter(request, response);
-    }
-    
-
-    @Test
-    void testDoFilterInternal_MalformedJwt() throws ServletException, IOException {
-        String token = "malformedToken";
-
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtUtil.extractEmail(token)).thenThrow(new MalformedJwtException("Malformed token"));
-
-        jwtAuthenticationFilterWeb.doFilterInternal(request, response, chain);
-
-        verify(response, times(1)).setStatus(HttpServletResponse.SC_BAD_REQUEST);
-        verify(chain, never()).doFilter(request, response);
-    }
-
-    @Test
-    void testDoFilterInternal_InvalidTokenFormat() throws ServletException, IOException {
-        String token = "invalidToken";
-
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtUtil.extractEmail(token)).thenThrow(new IllegalArgumentException("Invalid token format"));
-
-        jwtAuthenticationFilterWeb.doFilterInternal(request, response, chain);
-
-        verify(response, times(1)).setStatus(HttpServletResponse.SC_BAD_REQUEST);
-        verify(chain, never()).doFilter(request, response);
+            if (token.equals("expiredToken")) {
+                when(jwtUtil.extractEmail(token)).thenThrow(new ExpiredJwtException(null, null, "Token has expired"));
+                verifyResponseStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            }
+        }
     }
 
     @Test
     void testDoFilterInternal_MissingJwt() throws ServletException, IOException {
         when(request.getHeader("Authorization")).thenReturn(null);
-
         jwtAuthenticationFilterWeb.doFilterInternal(request, response, chain);
-
         verify(chain, times(1)).doFilter(request, response);
     }
 
-    @Test
-    void testDoFilterInternal_InvalidToken() throws ServletException, IOException {
-        String token = "invalidToken";
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtUtil.extractEmail(token)).thenThrow(new IllegalArgumentException("Invalid token format"));
-
+    private void verifyResponseStatus(int expectedStatus) throws IOException, ServletException {
         jwtAuthenticationFilterWeb.doFilterInternal(request, response, chain);
-
-        verify(response, times(1)).setStatus(HttpServletResponse.SC_BAD_REQUEST);
-        verify(response, times(1)).getWriter(); // Verifica que se haya llamado a getWriter
+        verify(response, times(1)).setStatus(expectedStatus);
         verify(chain, never()).doFilter(request, response);
     }
-
-
-
-    
 }

@@ -1,13 +1,14 @@
-package  co.edu.javeriana.glaucomapp_backend.apikeyuserauth;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
+package co.edu.javeriana.glaucomapp_backend.apikeyuserauth;
 
 import java.util.Map;
 import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.when;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -59,7 +60,7 @@ public class UserApiControllerTest {
         LoginRequestDTO loginUser = new LoginRequestDTO("email@example.com", "password");
         Role role = new Role();
         role.setRole(RoleEnum.USER);
-        UserApi user = new UserApi(1L, "email@example.com", "password",  "entity", "username", role);
+        UserApi user = new UserApi(1L, "email@example.com", "password", "entity", "username", role);
         when(userApiService.findUserByEmail(loginUser.email())).thenReturn(Optional.of(user));
         when(userApiService.verifyPassword(user, loginUser.password())).thenReturn(true);
         when(jwtUtil.generateToken(user.getEmail(), user.getId(), user.getRole().getRole().toString())).thenReturn("token");
@@ -73,10 +74,20 @@ public class UserApiControllerTest {
     @Test
     void testLogin_InvalidCredentials() {
         LoginRequestDTO loginUser = new LoginRequestDTO("email@example.com", "wrongpassword");
+        Role role = new Role();
+        role.setRole(RoleEnum.USER);
+        UserApi user = new UserApi(1L, "email@example.com", "password", "entity", "username", role); // Correct password is "password"
+
+        // Test case for user not found
         when(userApiService.findUserByEmail(loginUser.email())).thenReturn(Optional.empty());
-
         ResponseEntity<?> response = userApiController.login(loginUser);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertEquals(Map.of("error", "Invalid email or password."), response.getBody());
 
+        // Test case for wrong password
+        when(userApiService.findUserByEmail(loginUser.email())).thenReturn(Optional.of(user));
+        when(userApiService.verifyPassword(user, loginUser.password())).thenReturn(false); // Simulate incorrect password
+        response = userApiController.login(loginUser);
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertEquals(Map.of("error", "Invalid email or password."), response.getBody());
     }
@@ -86,7 +97,7 @@ public class UserApiControllerTest {
         UserApiDTO userApi = new UserApiDTO("username", "email@example.com", "password", "role");
         Role role = new Role();
         role.setRole(RoleEnum.USER);
-        UserApi updatedUser = new UserApi(1L, "email@example.com", "password",  "entity", "username", role);
+        UserApi updatedUser = new UserApi(1L, "email@example.com", "password", "entity", "username", role);
         when(userApiService.editUser(1L, userApi)).thenReturn(updatedUser);
 
         UserApi response = userApiController.editUser(1L, userApi);
@@ -120,25 +131,4 @@ public class UserApiControllerTest {
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertEquals("Unauthorized access.", response.getBody());
     }
-
-    @Test
-void testLogin_InvalidPassword() {
-    // Arrange
-    LoginRequestDTO loginUser = new LoginRequestDTO("email@example.com", "wrongpassword");
-    Role role = new Role();
-    role.setRole(RoleEnum.USER);
-    UserApi user = new UserApi(1L, "email@example.com", "password", "entity", "username", role); // Correct password is "password"
-
-    // Mocking the service layer methods
-    when(userApiService.findUserByEmail(loginUser.email())).thenReturn(Optional.of(user));
-    when(userApiService.verifyPassword(user, loginUser.password())).thenReturn(false); // Simulate incorrect password
-
-    // Act
-    ResponseEntity<?> response = userApiController.login(loginUser);
-
-    // Assert
-    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-    assertEquals(Map.of("error", "Invalid email or password."), response.getBody());
-}
-
 }

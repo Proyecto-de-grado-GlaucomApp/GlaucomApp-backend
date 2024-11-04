@@ -15,8 +15,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 public class GlaucomaScreeningMobileControllerTest {
 
+
     @InjectMocks
-    private GlaucomaScreeningMobileController glaucomaScreeningMobileController;
+    private GlaucomaScreeningController glaucomaScreeningController;
 
     @Mock
     private GlaucomaScreeningService glaucomaScreeningService;
@@ -29,87 +30,60 @@ public class GlaucomaScreeningMobileControllerTest {
         MockitoAnnotations.openMocks(this);
     }
 
-        // Test de éxito para la carga de imagen
-        @Test
-        public void test_upload_image_success_returns_200() {
-            // Arrange
-            ImageProcessingResultDTO expectedResult = new ImageProcessingResultDTO(); // Crea un objeto de resultado esperado
-            when(glaucomaScreeningService.sendImageToApi(mockFile)).thenReturn(expectedResult);
-            
-            // Act
-            ResponseEntity<?> response = glaucomaScreeningMobileController.uploadImage(mockFile);
-            
-            // Assert
-            assertEquals(HttpStatus.OK, response.getStatusCode());
-            assertEquals(expectedResult, response.getBody());
-        }
-
-        // Test para manejar el caso cuando no se proporciona un archivo
+    // Test de éxito para la carga de imagen
     @Test
-    public void test_upload_image_no_file_provided_returns_400() {
-        // Arrange
+    public void test_upload_image_success_returns_200() {
+        ImageProcessingResultDTO expectedResult = new ImageProcessingResultDTO();
+        when(glaucomaScreeningService.sendImageToApi(mockFile)).thenReturn(expectedResult);
+        
+        ResponseEntity<?> response = glaucomaScreeningController.uploadImage(mockFile);
+        
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(expectedResult, response.getBody());
+    }
+
+    // Test para manejar casos de archivo no proporcionado o nulo
+    @Test
+    public void test_upload_image_no_file_returns_400() {
+        // Simular archivo vacío
         when(mockFile.isEmpty()).thenReturn(true);
-
-        // Act
-        ResponseEntity<?> response = glaucomaScreeningMobileController.uploadImage(mockFile);
-
-        // Assert
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("No file provided or file is empty.", response.getBody());
+        ResponseEntity<?> responseEmpty = glaucomaScreeningController.uploadImage(mockFile);
+        
+        assertEquals(HttpStatus.BAD_REQUEST, responseEmpty.getStatusCode());
+        assertEquals("No file provided or file is empty.", responseEmpty.getBody());
+        
+        // Simular archivo nulo
+        ResponseEntity<?> responseNull = glaucomaScreeningController.uploadImage(null);
+        
+        assertEquals(HttpStatus.BAD_REQUEST, responseNull.getStatusCode());
+        assertEquals("No file provided or file is empty.", responseNull.getBody());
     }
 
-    // Test para manejar el caso cuando el archivo es nulo
+    // Test para manejar errores del servicio
     @Test
-    public void test_upload_image_null_file_returns_400() {
-        // Act
-        ResponseEntity<?> response = glaucomaScreeningMobileController.uploadImage(null);
+    public void test_upload_image_service_error_returns_400_or_500() {
+        // Error de cliente
+        String clientErrorMessage = "Client error: Invalid input";
+        doThrow(new RuntimeException(clientErrorMessage)).when(glaucomaScreeningService).sendImageToApi(any(MultipartFile.class));
+        
+        ResponseEntity<?> responseClientError = glaucomaScreeningController.uploadImage(mockFile);
+        assertEquals(HttpStatus.BAD_REQUEST, responseClientError.getStatusCode());
+        assertEquals("Request error: " + clientErrorMessage, responseClientError.getBody());
 
-        // Assert
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("No file provided or file is empty.", response.getBody());
-    }
-    // Test para manejar errores de cliente
-    @Test
-    public void test_upload_image_client_error_returns_400() {
-        // Arrange
-        String errorMessage = "Client error: Invalid input";
-        doThrow(new RuntimeException(errorMessage)).when(glaucomaScreeningService).sendImageToApi(any(MultipartFile.class));
+        // Error de servidor
+        String serverErrorMessage = "Server error: Service unavailable";
+        doThrow(new RuntimeException(serverErrorMessage)).when(glaucomaScreeningService).sendImageToApi(any(MultipartFile.class));
         
-        // Act
-        ResponseEntity<?> response = glaucomaScreeningMobileController.uploadImage(mockFile);
-        
-        // Assert
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("Request error: " + errorMessage, response.getBody());
-    }
+        ResponseEntity<?> responseServerError = glaucomaScreeningController.uploadImage(mockFile);
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseServerError.getStatusCode());
+        assertEquals("External service error: " + serverErrorMessage, responseServerError.getBody());
 
-    // Test para manejar errores de servidor
-    @Test
-    public void test_upload_image_server_error_returns_500() {
-        // Arrange
-        String errorMessage = "Server error: Service unavailable";
-        doThrow(new RuntimeException(errorMessage)).when(glaucomaScreeningService).sendImageToApi(any(MultipartFile.class));
+        // Error inesperado
+        String unexpectedErrorMessage = "Unexpected error occurred";
+        doThrow(new RuntimeException(unexpectedErrorMessage)).when(glaucomaScreeningService).sendImageToApi(any(MultipartFile.class));
         
-        // Act
-        ResponseEntity<?> response = glaucomaScreeningMobileController.uploadImage(mockFile);
-        
-        // Assert
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertEquals("External service error: " + errorMessage, response.getBody());
-    }
-
-    // Test para manejar errores inesperados
-    @Test
-    public void test_upload_image_unexpected_error_returns_500() {
-        // Arrange
-        String errorMessage = "Unexpected error occurred";
-        doThrow(new RuntimeException(errorMessage)).when(glaucomaScreeningService).sendImageToApi(any(MultipartFile.class));
-        
-        // Act
-        ResponseEntity<?> response = glaucomaScreeningMobileController.uploadImage(mockFile);
-        
-        // Assert
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertEquals("An unexpected error occurred.", response.getBody());
+        ResponseEntity<?> responseUnexpectedError = glaucomaScreeningController.uploadImage(mockFile);
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseUnexpectedError.getStatusCode());
+        assertEquals("An unexpected error occurred.", responseUnexpectedError.getBody());
     }
 }

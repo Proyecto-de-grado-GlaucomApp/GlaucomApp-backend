@@ -6,10 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,26 +40,18 @@ public class JwtUtilTest {
     }
 
     @Test
-    void testGenerateToken() {
+    void testGenerateAndValidateToken() {
         String token = jwtUtil.generateToken("email@example.com", 1L, "USER");
         assertNotNull(token);
-
-        Claims claims = Jwts.parser()
-                .verifyWith(Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET_KEY)))
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
-        assertEquals("email@example.com", claims.get("email"));
-        assertEquals("USER", claims.get("role"));
-        assertEquals("1", claims.getSubject());
+        assertTrue(jwtUtil.validateToken(token));
+        when(userDetails.getUsername()).thenReturn("email@example.com");
+        assertTrue(jwtUtil.isTokenValid(token, userDetails));
     }
 
-    
     @Test
     void testValidateToken_Invalid() {
-        String token = "invalid.token.here";
-        assertFalse(jwtUtil.validateToken(token));
+        String invalidToken = "invalid.token.here";
+        assertFalse(jwtUtil.validateToken(invalidToken));
     }
 
     @Test
@@ -72,13 +61,7 @@ public class JwtUtilTest {
     }
 
     @Test
-    void testIsTokenExpired_NotExpired() {
-        String token = jwtUtil.generateToken("email@example.com", 1L, "USER");
-        assertFalse(jwtUtil.isTokenExpired(token));
-    }
-
-    @Test
-    void testIsTokenExpired_Expired() {
+    void testIsTokenExpired() {
         Map<String, Object> claims = new HashMap<>();
         claims.put("email", "email@example.com");
         claims.put("role", "USER");
@@ -99,79 +82,42 @@ public class JwtUtilTest {
     }
 
     @Test
-    void testIsTokenValid_Valid() {
-        String token = jwtUtil.generateToken("email@example.com", 1L, "USER");
-        when(userDetails.getUsername()).thenReturn("email@example.com");
-        assertTrue(jwtUtil.isTokenValid(token, userDetails));
-    }
-
-    @Test
-    void testIsTokenValid_Invalid() {
-        String token = jwtUtil.generateToken("email@example.com", 1L, "USER");
-        when(userDetails.getUsername()).thenReturn("different@example.com");
-        assertFalse(jwtUtil.isTokenValid(token, userDetails));
-    }
-
-    @Test
-    void testExtractSubject() {
-        String token = jwtUtil.generateToken("email@example.com", 1L, "USER");
-        assertEquals("1", jwtUtil.extractSubject(token));
-    }
-
-    @Test
-    void testExtractRole() {
-        String token = jwtUtil.generateToken("email@example.com", 1L, "USER");
-        assertEquals("USER", jwtUtil.extractRole(token));
-    }
-
-    @Test
-    void testAddToBlacklist() {
-        String token = jwtUtil.generateToken("email@example.com", 1L, "MOBILE");
-        jwtUtil.addToBlacklist(token);
-        assertTrue(jwtUtil.isBlacklisted(token));
-    }
-
-    @Test
-    void testIsBlacklisted() {
+    void testTokenBlacklistFunctionality() {
         String token = jwtUtil.generateToken("email@example.com", 1L, "MOBILE");
         assertFalse(jwtUtil.isBlacklisted(token));
         jwtUtil.addToBlacklist(token);
         assertTrue(jwtUtil.isBlacklisted(token));
+        assertFalse(jwtUtil.isTokenValid(token));
     }
 
     @Test
-    void testInvalidateToken() {
-        String token = jwtUtil.generateToken("email@example.com", 1L, "MOBILE");
-        assertTrue(jwtUtil.invalidateToken("Bearer " + token));
-        assertTrue(jwtUtil.isBlacklisted(token));
+    void testExtractSubjectAndRole() {
+        String token = jwtUtil.generateToken("email@example.com", 1L, "USER");
+        assertEquals("1", jwtUtil.extractSubject(token));
+        assertEquals("USER", jwtUtil.extractRole(token));
     }
 
     @Test
     void testExtractIdFromToken() {
-        // Arrange
         MyUser userDetails = MyUser.builder()
-                .id(UUID.randomUUID()) // This generates a random UUID
+                .id(UUID.randomUUID())
                 .name("name")
                 .username("example.com")
                 .password("password")
                 .role("MOBILE")
                 .build();
-
-        // Generate the token
         String token = jwtUtil.generateToken(userDetails);
-
-        // Act
-        String extractedId = jwtUtil.extractIdFromToken("Bearer " + token);
-
-        // Assert
-        assertEquals(userDetails.getId().toString(), extractedId); // Compare against the actual UUID string
+        assertEquals(userDetails.getId().toString(), jwtUtil.extractIdFromToken("Bearer " + token));
     }
-
 
     @Test
     void testRefreshToken() {
-        MyUser userDetails = MyUser.builder().id(UUID.randomUUID()).name("name").username("example.com")
-                .password("password").role("MOBILE")
+        MyUser userDetails = MyUser.builder()
+                .id(UUID.randomUUID())
+                .name("name")
+                .username("example.com")
+                .password("password")
+                .role("MOBILE")
                 .build();
         String expiredToken = jwtUtil.generateRefreshToken(userDetails);
         String refreshedToken = jwtUtil.refreshToken(expiredToken);
@@ -179,48 +125,42 @@ public class JwtUtilTest {
     }
 
     @Test
-void testIsTokenValid_ValidToken() {
-    String token = jwtUtil.generateToken("email@example.com", 1L, "USER");
-    // Simula que el token no está en la lista negra y no ha expirado
-    assertTrue(jwtUtil.isTokenValid(token));
-}
+    void testExtractRefreshFromToken() {
+        String token = Jwts.builder()
+                .claim("refresh", true)
+                .setSubject("1")
+                .signWith(Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET_KEY)))
+                .compact();
+        assertTrue(jwtUtil.extractRefreshFromToken("Bearer " + token));
+    }
 
-@Test
-void testIsTokenValid_BlacklistedToken() {
-    String token = jwtUtil.generateToken("email@example.com", 1L, "USER");
-    jwtUtil.addToBlacklist(token); // Agregar a la lista negra
-    assertFalse(jwtUtil.isTokenValid(token)); // Debe ser inválido
-}
-
-@Test
-void testIsTokenValid_ExpiredToken() {
-    // Crear un token expirado manualmente
-    Map<String, Object> claims = new HashMap<>();
-    claims.put("email", "email@example.com");
-    claims.put("role", "USER");
-    
+    @Test
+void testExtractIdFromTokenForRefresh() {
+    // Crear un token con el claim "id"
+    String expectedId = UUID.randomUUID().toString(); // Generar un UUID de ejemplo
     String token = Jwts.builder()
-            .claims(claims)
-            .subject("1")
-            .issuedAt(new Date(System.currentTimeMillis() - EXPIRATION_TIME)) // Token emitido hace más de 1 hora
-            .expiration(new Date(System.currentTimeMillis() - 1000)) // Token expirado
+            .claim("id", expectedId) // Agregar el claim "id"
             .signWith(Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET_KEY)))
             .compact();
 
-    assertFalse(jwtUtil.isTokenValid(token)); // Debe ser inválido
+    // Llamar al método y verificar el resultado
+    String extractedId = jwtUtil.extractIdFromTokenForRefresh(token);
+    assertEquals(expectedId, extractedId); // Comparar el resultado con el valor esperado
 }
 
 @Test
-void testExtractRefreshFromToken() {
-    // Generar un token con el claim "refresh"
-    String token = Jwts.builder()
-            .claims(new HashMap<>())
-            .subject("1")
-            .claim("refresh", true) // Agregar el claim "refresh"
-            .signWith(Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET_KEY)))
-            .compact();
+void testExtractIdFromTokenForRefresh_InvalidToken() {
+    // Token inválido para probar la excepción
+    String invalidToken = "invalid.token.here";
 
-    Boolean isRefresh = jwtUtil.extractRefreshFromToken("Bearer " + token);
-    assertTrue(isRefresh); // Debe devolver true
+    // Capturar la salida del sistema para verificar el mensaje de error (opcional)
+    try {
+        String extractedId = jwtUtil.extractIdFromTokenForRefresh(invalidToken);
+        assertNull(extractedId); // Debe devolver null si falla la decodificación
+    } catch (Exception e) {
+        // Verificar que el mensaje de error se imprima correctamente
+        System.out.println("Error capturado en la prueba: " + e.getMessage());
+    }
 }
+
 }

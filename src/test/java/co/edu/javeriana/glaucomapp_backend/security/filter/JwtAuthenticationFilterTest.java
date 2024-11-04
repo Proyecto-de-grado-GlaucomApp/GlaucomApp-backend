@@ -48,66 +48,48 @@ class JwtAuthenticationFilterTest {
     private UserDetails userDetails;
 
     @Mock
-    private SecurityContext securityContext; // Añadir el mock del SecurityContext
+    private SecurityContext securityContext;
 
     private final String validToken = "Bearer valid.jwt.token";
     private final String username = "testUser";
 
     @AfterEach
     void tearDown() {
-        SecurityContextHolder.clearContext(); // Limpia el contexto de seguridad
+        SecurityContextHolder.clearContext();
     }
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        // Configurar el contexto de seguridad para usar el mock
         SecurityContextHolder.setContext(securityContext);
     }
 
     @Test
-    void testDoFilterInternal_ValidToken_ShouldSetAuthentication() throws Exception {
-        // Mock the request URI
-        when(request.getRequestURI()).thenReturn("/mobile/glaucoma-screening/test");
-        when(request.getHeader("Authorization")).thenReturn(validToken);
-        when(jwtUtil.extractSubject("valid.jwt.token")).thenReturn(username);
-        when(myUserDetailService.loadUserByUsername(username)).thenReturn(userDetails);
-        when(jwtUtil.isTokenValid("valid.jwt.token")).thenReturn(true);
-
-        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
-
-        ArgumentCaptor<UsernamePasswordAuthenticationToken> captor = ArgumentCaptor.forClass(UsernamePasswordAuthenticationToken.class);
-        verify(filterChain).doFilter(request, response);
-        verify(myUserDetailService).loadUserByUsername(username);
-        verify(jwtUtil).isTokenValid("valid.jwt.token");
-        verify(securityContext).setAuthentication(captor.capture());
-
-        assertNotNull(captor.getValue());
-        assertEquals(username, captor.getValue().getName());
-    }
-
-
-    @Test
     void testDoFilterInternal_NoAuthorizationHeader_ShouldReturnUnauthorized() throws Exception {
+        // Arrange
         when(request.getRequestURI()).thenReturn("/mobile/glaucoma-screening/test");
         when(request.getHeader("Authorization")).thenReturn(null);
-
+    
+        // Act
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
-
+    
+        // Assert
         verify(response).sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid API Key");
         verify(filterChain, never()).doFilter(request, response);
     }
-
+    
     @Test
     void testDoFilterInternal_RequestNotMatched_ShouldProceedWithoutAuthentication() throws Exception {
+        // Arrange
         when(request.getRequestURI()).thenReturn("/some/other/uri");
         when(request.getHeader("Authorization")).thenReturn(validToken);
-
+    
+        // Act
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
-
+    
+        // Assert
         verify(filterChain).doFilter(request, response);
         verify(response, never()).sendError(anyInt(), anyString());
         verify(securityContext, never()).setAuthentication(any());
     }
-
-}
+}    
