@@ -43,13 +43,12 @@ import jakarta.servlet.http.HttpServletResponse;
 @Configuration
 public class JwtAuthenticationFilter extends OncePerRequestFilter{
     private final JwtUtil jwtUtil;
+    private final MyUserDetailService myUserDetailService;  // Changed to final
  
-    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
+    public JwtAuthenticationFilter(JwtUtil jwtUtil, MyUserDetailService myUserDetailService) {  // Modified constructor
         this.jwtUtil = jwtUtil;
+        this.myUserDetailService = myUserDetailService;
     }
- 
-    @Autowired
-    protected MyUserDetailService myUserDetailService;
  
       @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -57,15 +56,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        if (!httpRequest.getRequestURI().startsWith("/mobile/glaucoma-screening") || !httpRequest.getRequestURI().startsWith("/mobile/clinical_history")) {
+
+        // Check if this is a protected path
+        boolean isProtectedPath = httpRequest != null && 
+            (httpRequest.getRequestURI().startsWith("/mobile/glaucoma-screening") || 
+            httpRequest.getRequestURI().startsWith("/mobile/clinical_history"));
+             
+        // If it's not a protected path, skip authentication
+        if (!isProtectedPath) {
             filterChain.doFilter(request, response);
             return;
         }
         
+        // For protected paths, check authorization header
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid API Key");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid API Key");
             return;
         }
+
+
        
  
         String jwt = authHeader.substring(7).trim();
