@@ -1,32 +1,30 @@
 package co.edu.javeriana.glaucomapp_backend.mobileauth.unit;
 
-import co.edu.javeriana.glaucomapp_backend.mobileauth.exposed.MyUser;
-import co.edu.javeriana.glaucomapp_backend.mobileauth.repository.MyUserRepository;
-import co.edu.javeriana.glaucomapp_backend.mobileauth.service.OphtalEventListener;
-
-import org.mockito.InjectMocks;
-import org.mockito.MockitoAnnotations;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
+import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.UUID;
-import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.when;
+import org.mockito.MockitoAnnotations;
 
-public class OphtalEventHandlerTest {
+import co.edu.javeriana.glaucomapp_backend.mobileauth.exposed.MyUser;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.repository.MyUserRepository;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.service.OphtalmologistEventListerner;
+
+public class OphtalmologistEventListernerTest {
 
     @Mock
     private MyUserRepository userRepository;
 
     @InjectMocks
-    private OphtalEventListener ophtalEventHandler;
+    private OphtalmologistEventListerner ophtalEventHandler;
 
     @BeforeEach
     public void setUp() {
@@ -34,7 +32,7 @@ public class OphtalEventHandlerTest {
     }
 
     private Object invokePrivateMethod(String methodName, Object instance, Object... args) throws Exception {
-        Method method = OphtalEventListener.class.getDeclaredMethod(methodName, String.class);
+        Method method = OphtalmologistEventListerner.class.getDeclaredMethod(methodName, String.class);
         method.setAccessible(true);
         return method.invoke(instance, args);
     }

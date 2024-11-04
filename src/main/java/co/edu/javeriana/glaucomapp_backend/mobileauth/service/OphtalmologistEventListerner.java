@@ -33,7 +33,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class OphtalEventListener {
+public class OphtalmologistEventListerner {
 
     private final MyUserRepository userRepository;
 
