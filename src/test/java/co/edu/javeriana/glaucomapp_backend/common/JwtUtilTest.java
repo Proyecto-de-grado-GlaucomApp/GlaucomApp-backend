@@ -4,6 +4,7 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -18,6 +19,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import co.edu.javeriana.glaucomapp_backend.mobileauth.exposed.MyUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -46,17 +48,17 @@ public class JwtUtilTest {
         assertNotNull(token);
 
         Claims claims = Jwts.parser()
-        .verifyWith(Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET_KEY)))
-        .build()
-        .parseSignedClaims(token)
-        .getPayload();
+                .verifyWith(Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET_KEY)))
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
 
         assertEquals("email@example.com", claims.get("email"));
         assertEquals("USER", claims.get("role"));
         assertEquals("1", claims.getSubject());
     }
 
-
+    
     @Test
     void testValidateToken_Invalid() {
         String token = "invalid.token.here";
@@ -76,26 +78,25 @@ public class JwtUtilTest {
     }
 
     @Test
-void testIsTokenExpired_Expired() {
-    Map<String, Object> claims = new HashMap<>();
-    claims.put("email", "email@example.com");
-    claims.put("role", "USER");
+    void testIsTokenExpired_Expired() {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("email", "email@example.com");
+        claims.put("role", "USER");
 
-    // Ensure to set claims correctly
-    String token = 
-  
-    
-    Jwts.builder()
-        .claims().add(claims).and()
-        .subject("1")
-        .issuedAt(new Date(System.currentTimeMillis() - EXPIRATION_TIME)) // Token issued more than 1 hour ago
-        .expiration(new Date(System.currentTimeMillis() - 1000)) // Token expired
-        .signWith(Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET_KEY))) // Specify algorithm
-        .compact();
+        // Ensure to set claims correctly
+        String token =
 
-    assertTrue(jwtUtil.validateToken((token)));
-}
+                Jwts.builder()
+                        .claims().add(claims).and()
+                        .subject("1")
+                        .issuedAt(new Date(System.currentTimeMillis() - EXPIRATION_TIME)) // Token issued more than 1
+                                                                                          // hour ago
+                        .expiration(new Date(System.currentTimeMillis() - 1000)) // Token expired
+                        .signWith(Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET_KEY))) // Specify algorithm
+                        .compact();
 
+        assertTrue(jwtUtil.validateToken((token)));
+    }
 
     @Test
     void testIsTokenValid_Valid() {
@@ -122,4 +123,60 @@ void testIsTokenExpired_Expired() {
         String token = jwtUtil.generateToken("email@example.com", 1L, "USER");
         assertEquals("USER", jwtUtil.extractRole(token));
     }
+
+    @Test
+    void testAddToBlacklist() {
+        String token = jwtUtil.generateToken("email@example.com", 1L, "MOBILE");
+        jwtUtil.addToBlacklist(token);
+        assertTrue(jwtUtil.isBlacklisted(token));
+    }
+
+    @Test
+    void testIsBlacklisted() {
+        String token = jwtUtil.generateToken("email@example.com", 1L, "MOBILE");
+        assertFalse(jwtUtil.isBlacklisted(token));
+        jwtUtil.addToBlacklist(token);
+        assertTrue(jwtUtil.isBlacklisted(token));
+    }
+
+    @Test
+    void testInvalidateToken() {
+        String token = jwtUtil.generateToken("email@example.com", 1L, "MOBILE");
+        assertTrue(jwtUtil.invalidateToken("Bearer " + token));
+        assertTrue(jwtUtil.isBlacklisted(token));
+    }
+
+    @Test
+    void testExtractIdFromToken() {
+        // Arrange
+        MyUser userDetails = MyUser.builder()
+                .id(UUID.randomUUID()) // This generates a random UUID
+                .name("name")
+                .username("example.com")
+                .password("password")
+                .role("MOBILE")
+                .build();
+
+        // Generate the token
+        String token = jwtUtil.generateToken(userDetails);
+
+        // Act
+        String extractedId = jwtUtil.extractIdFromToken("Bearer " + token);
+
+        // Assert
+        assertEquals(userDetails.getId().toString(), extractedId); // Compare against the actual UUID string
+    }
+
+
+    @Test
+    void testRefreshToken() {
+        MyUser userDetails = MyUser.builder().id(UUID.randomUUID()).name("name").username("example.com")
+                .password("password").role("MOBILE")
+                .build();
+        String expiredToken = jwtUtil.generateRefreshToken(userDetails);
+        String refreshedToken = jwtUtil.refreshToken(expiredToken);
+        assertNotNull(refreshedToken);
+    }
+
+
 }
