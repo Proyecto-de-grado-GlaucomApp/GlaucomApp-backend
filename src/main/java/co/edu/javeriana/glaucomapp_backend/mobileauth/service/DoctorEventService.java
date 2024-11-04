@@ -11,7 +11,7 @@
  * 
  * 
  */
-package co.edu.javeriana.glaucomapp_backend.mobileauth.repository;
+package co.edu.javeriana.glaucomapp_backend.mobileauth.service;
 
 import java.util.UUID;
 
