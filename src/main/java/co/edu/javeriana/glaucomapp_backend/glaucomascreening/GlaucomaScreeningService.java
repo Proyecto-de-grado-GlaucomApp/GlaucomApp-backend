@@ -37,9 +37,9 @@ import co.edu.javeriana.glaucomapp_backend.s3.exposed.S3Service;
 public class GlaucomaScreeningService {
 
     @Value("${PYTHON_API_URL}")
-    private String pythonApiUrl;
+    protected String pythonApiUrl;
 
-    private final S3Service s3Service;
+    protected final S3Service s3Service;
 
     public GlaucomaScreeningService(S3Service s3Service) {
         this.s3Service = s3Service;
@@ -59,7 +59,7 @@ public class GlaucomaScreeningService {
         return null; // Considerar lanzar una excepción o manejar un resultado nulo
     }
 
-    private ResponseEntity<String> sendImageToExternalApi(byte[] buf) {
+    protected ResponseEntity<String> sendImageToExternalApi(byte[] buf) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = createHeaders();
 
@@ -70,13 +70,13 @@ public class GlaucomaScreeningService {
         return response;
     }
 
-    private HttpHeaders createHeaders() {
+    protected HttpHeaders createHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         return headers;
     }
 
-    private void handleImageProcessingException(Exception e) {
+    protected void handleImageProcessingException(Exception e) {
         if (e instanceof HttpServerErrorException) {
             throw new RuntimeException(
                     "Error from external service: " + ((HttpServerErrorException) e).getResponseBodyAsString(), e);
@@ -87,7 +87,7 @@ public class GlaucomaScreeningService {
         }
     }
 
-    private ImageProcessingResultDTO handleApiResponse(MultipartFile file, ResponseEntity<String> response)
+    protected ImageProcessingResultDTO handleApiResponse(MultipartFile file, ResponseEntity<String> response)
             throws IOException {
         if (response.getStatusCode().is2xxSuccessful()) {
             int width = ImageIO.read(file.getInputStream()).getWidth();
@@ -99,7 +99,7 @@ public class GlaucomaScreeningService {
         return null;
     }
 
-    private void handleApiError(ResponseEntity<String> response) {
+    protected void handleApiError(ResponseEntity<String> response) {
         if (response.getStatusCode().is4xxClientError()) {
             throw new RuntimeException("Client error from external API: " + response.getStatusCode());
         } else if (response.getStatusCode().is5xxServerError()) {
@@ -107,13 +107,13 @@ public class GlaucomaScreeningService {
         }
     }
 
-    public String generateUniqueImageId() {
+    protected String generateUniqueImageId() {
         long timestamp = System.currentTimeMillis();
         String uuid = UUID.randomUUID().toString();
         return "image_" + timestamp + "_" + uuid + ".png";
     }
 
-    public ImageProcessingResultDTO processApiResponseData(ResponseEntity<String> response, int width, int height) {
+    protected ImageProcessingResultDTO processApiResponseData(ResponseEntity<String> response, int width, int height) {
         ImageProcessingResultDTO processresult = new ImageProcessingResultDTO();
         ObjectMapper objectMapper = configureObjectMapper();
 
@@ -132,7 +132,7 @@ public class GlaucomaScreeningService {
         return processresult;
     }
 
-    private void calculateRatiosAndSetResult(ImageProcessingResultDTO processresult, ServerResultDTO result) {
+    protected void calculateRatiosAndSetResult(ImageProcessingResultDTO processresult, ServerResultDTO result) {
         processresult.setDistanceRatio(calculateRatio(result.getDistances()));
         processresult.setPerimeterRatio(calculateRatio(result.getPerimeters()));
         processresult.setAreaRatio(calculateRatio(result.getAreas()));
@@ -140,11 +140,11 @@ public class GlaucomaScreeningService {
         processresult.setState(calculateState(processresult.getDdlStage()));
     }
 
-    private double calculateRatio(List<Double> values) {
+    protected double calculateRatio(List<Double> values) {
         return new BigDecimal(values.get(1) / values.get(0)).setScale(3, RoundingMode.HALF_UP).doubleValue();
     }
 
-    private void uploadImageToS3(BufferedImage image, ImageProcessingResultDTO processresult, ServerResultDTO result) {
+    protected void uploadImageToS3(BufferedImage image, ImageProcessingResultDTO processresult, ServerResultDTO result) {
         String fileName = generateUniqueImageId();
         s3Service.uploadImage(image, fileName);
         String url = s3Service.generatePresignedUrl(fileName);
@@ -156,13 +156,13 @@ public class GlaucomaScreeningService {
         processresult.setExcavationArea(result.getAreas().get(1));
     }
 
-    private BufferedImage postprocessImageData(ServerResultDTO result, int width, int height) throws IOException {
+    protected BufferedImage postprocessImageData(ServerResultDTO result, int width, int height) throws IOException {
         String base64Image = result.getBitmap();
         BufferedImage image = postprocessImage(Base64.getDecoder().decode(base64Image), width, height);
         return image;
     }
 
-    private ObjectMapper configureObjectMapper() {
+    protected ObjectMapper configureObjectMapper() {
         StreamReadConstraints constraints = StreamReadConstraints.builder()
                 .maxStringLength(100_000_000)
                 .build();
@@ -174,7 +174,7 @@ public class GlaucomaScreeningService {
         return new ObjectMapper(jsonFactory);
     }
 
-    private ServerResultDTO parseResponse(ResponseEntity<String> response, ObjectMapper objectMapper)
+    protected ServerResultDTO parseResponse(ResponseEntity<String> response, ObjectMapper objectMapper)
             throws IOException {
         JsonNode jsonNode = objectMapper.readTree(response.getBody());
 
@@ -202,19 +202,19 @@ public class GlaucomaScreeningService {
         return result;
     }
 
-    private List<Double> parseCoordinates(JsonNode coordinates) {
+    protected List<Double> parseCoordinates(JsonNode coordinates) {
         List<Double> coordinatesList = new ArrayList<>();
         coordinates.forEach(coordinate -> coordinatesList.add(coordinate.asDouble()));
         return coordinatesList;
     }
 
-    private List<Double> parseListFromJsonNode(JsonNode jsonNode) {
+    protected List<Double> parseListFromJsonNode(JsonNode jsonNode) {
         List<Double> list = new ArrayList<>();
         jsonNode.forEach(item -> list.add(item.asDouble()));
         return list;
     }
 
-    public int calculateDDLStage(Double distanceRatio) {
+    protected int calculateDDLStage(Double distanceRatio) {
         if (distanceRatio >= 0.4) {
             return 1;
         } else if (distanceRatio >= 0.3) {
@@ -230,7 +230,7 @@ public class GlaucomaScreeningService {
         }
     }
 
-    public int calculateState(int ddlsStage) {
+    protected int calculateState(int ddlsStage) {
         return switch (ddlsStage) {
             case 1, 2, 3, 4 -> GlaucomaStatus.AT_RISK.getCode();
             case 5, 6, 7 -> GlaucomaStatus.GLAUCOMA_DAMAGE.getCode();
@@ -239,7 +239,7 @@ public class GlaucomaScreeningService {
         };
     }
 
-    public byte[] preprocessImage(MultipartFile file) throws IOException {
+    protected byte[] preprocessImage(MultipartFile file) throws IOException {
         BufferedImage image = ImageIO.read(file.getInputStream());
         int height = image.getHeight();
         int width = image.getWidth();
@@ -300,7 +300,7 @@ public class GlaucomaScreeningService {
 
     }
 
-    public BufferedImage postprocessImage(byte[] data, int width, int height) throws IOException {
+    protected BufferedImage postprocessImage(byte[] data, int width, int height) throws IOException {
 
         data = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).array();
 
