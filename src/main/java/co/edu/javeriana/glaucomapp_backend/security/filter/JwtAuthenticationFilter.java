@@ -49,7 +49,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
     }
  
     @Autowired
-    private MyUserDetailService myUserDetailService;
+    protected MyUserDetailService myUserDetailService;
  
       @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -67,10 +67,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
             return;
         }
        
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid API Key");
-            return;
-        }
  
         String jwt = authHeader.substring(7).trim();
         String username = jwtUtil.extractSubject(jwt);
