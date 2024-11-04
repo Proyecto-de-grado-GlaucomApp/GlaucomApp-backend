@@ -1,5 +1,6 @@
 package co.edu.javeriana.glaucomapp_backend.security.filter;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -51,6 +52,11 @@ class JwtAuthenticationFilterTest {
 
     private final String validToken = "Bearer valid.jwt.token";
     private final String username = "testUser";
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext(); // Limpia el contexto de seguridad
+    }
 
     @BeforeEach
     void setUp() {
