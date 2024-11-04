@@ -178,5 +178,49 @@ public class JwtUtilTest {
         assertNotNull(refreshedToken);
     }
 
+    @Test
+void testIsTokenValid_ValidToken() {
+    String token = jwtUtil.generateToken("email@example.com", 1L, "USER");
+    // Simula que el token no está en la lista negra y no ha expirado
+    assertTrue(jwtUtil.isTokenValid(token));
+}
 
+@Test
+void testIsTokenValid_BlacklistedToken() {
+    String token = jwtUtil.generateToken("email@example.com", 1L, "USER");
+    jwtUtil.addToBlacklist(token); // Agregar a la lista negra
+    assertFalse(jwtUtil.isTokenValid(token)); // Debe ser inválido
+}
+
+@Test
+void testIsTokenValid_ExpiredToken() {
+    // Crear un token expirado manualmente
+    Map<String, Object> claims = new HashMap<>();
+    claims.put("email", "email@example.com");
+    claims.put("role", "USER");
+    
+    String token = Jwts.builder()
+            .claims(claims)
+            .subject("1")
+            .issuedAt(new Date(System.currentTimeMillis() - EXPIRATION_TIME)) // Token emitido hace más de 1 hora
+            .expiration(new Date(System.currentTimeMillis() - 1000)) // Token expirado
+            .signWith(Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET_KEY)))
+            .compact();
+
+    assertFalse(jwtUtil.isTokenValid(token)); // Debe ser inválido
+}
+
+@Test
+void testExtractRefreshFromToken() {
+    // Generar un token con el claim "refresh"
+    String token = Jwts.builder()
+            .claims(new HashMap<>())
+            .subject("1")
+            .claim("refresh", true) // Agregar el claim "refresh"
+            .signWith(Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET_KEY)))
+            .compact();
+
+    Boolean isRefresh = jwtUtil.extractRefreshFromToken("Bearer " + token);
+    assertTrue(isRefresh); // Debe devolver true
+}
 }
