@@ -39,6 +39,7 @@ public class WebSecurityConfig {
     @Autowired
     private MyUserDetailService userDetailService;
 
+
     @Bean
     public JwtUtil jwtUtil() {
         return new JwtUtil();
@@ -69,7 +70,7 @@ public class WebSecurityConfig {
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtUtil());
+        return new JwtAuthenticationFilter(jwtUtil(), userDetailService);
     }
 
 
