@@ -49,7 +49,7 @@ public class GlobalExceptionHandlerTest {
     public void testHandleIllegalArgumentUsernameInUse() {
         IllegalArgumentException exception = new IllegalArgumentException("Username already in use");
         ResponseEntity<String> response = globalExceptionHandler.handleIllegalArgument(exception);
-        assertEquals(409, response.getStatusCodeValue());
+        assertEquals(409, response.getStatusCode().value());
         assertEquals("Error: Username already in use", response.getBody());
     }
 
