@@ -43,9 +43,9 @@ import org.springframework.stereotype.Service;
 
 import co.edu.javeriana.glaucomapp_backend.mobileauth.exposed.MyUser;
 import co.edu.javeriana.glaucomapp_backend.mobileauth.model.LogInForm;
-import co.edu.javeriana.glaucomapp_backend.mobileauth.repository.DoctorEventService;
 import co.edu.javeriana.glaucomapp_backend.mobileauth.repository.MyUserRepository;
 import co.edu.javeriana.glaucomapp_backend.mobileauth.service.AuthService;
+import co.edu.javeriana.glaucomapp_backend.mobileauth.service.DoctorEventService;
 import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.UnauthorizedException;
 import jakarta.servlet.http.Cookie;
