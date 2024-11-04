@@ -1,4 +1,4 @@
-package co.edu.javeriana.glaucomapp_backend.security;
+package co.edu.javeriana.glaucomapp_backend.security.filter;
 
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
