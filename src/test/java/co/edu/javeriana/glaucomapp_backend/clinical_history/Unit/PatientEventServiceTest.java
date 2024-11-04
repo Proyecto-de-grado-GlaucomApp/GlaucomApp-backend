@@ -15,7 +15,7 @@ import co.edu.javeriana.glaucomapp_backend.clinical_history.model.pacient.Pacien
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.Exam;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.repository.ExamRepository;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.repository.PacientRepository;
-import co.edu.javeriana.glaucomapp_backend.clinical_history.service.impl.PatientEventService;
+import co.edu.javeriana.glaucomapp_backend.clinical_history.service.impl.PatientEventListener;
 import co.edu.javeriana.glaucomapp_backend.s3.exposed.S3Service;
 
 public class PatientEventServiceTest {
@@ -30,7 +30,7 @@ public class PatientEventServiceTest {
     private S3Service s3Service;
 
     @InjectMocks
-    private PatientEventService patientEventService;
+    private PatientEventListener patientEventService;
 
     @BeforeEach
     public void setUp() {
@@ -38,7 +38,7 @@ public class PatientEventServiceTest {
     }
 
     private void invokePrivateMethod(String methodName, Object... args) throws Exception {
-        Method method = PatientEventService.class.getDeclaredMethod(methodName, UUID.class);
+        Method method = PatientEventListener.class.getDeclaredMethod(methodName, UUID.class);
         method.setAccessible(true);
         method.invoke(patientEventService, args);
     }
