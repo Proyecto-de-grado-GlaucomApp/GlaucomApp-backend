@@ -43,14 +43,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import co.edu.javeriana.glaucomapp_backend.clinical_history.model.ErrorResponse;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.ExamRequest;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.ExamRes;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.ExamsResponse;
-import co.edu.javeriana.glaucomapp_backend.clinical_history.model.ErrorResponse;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.pacient.PacientRequest;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.pacient.PacientResponse;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.service.ExamService;
-import co.edu.javeriana.glaucomapp_backend.clinical_history.service.PacientService;
+import co.edu.javeriana.glaucomapp_backend.clinical_history.service.PatientService;
 import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.UnauthorizedException;
 import jakarta.persistence.EntityNotFoundException;
@@ -59,14 +59,14 @@ import jakarta.persistence.EntityNotFoundException;
 @RestController
 public class CHController {
 
-    private final PacientService pacientService;
+    private final PatientService pacientService;
 
     private final ExamService examService;
 
     
     private final JwtUtil jwtUtil;
 
-    public CHController(PacientService pacientService, ExamService examService, JwtUtil jwtUtil) {
+    public CHController(PatientService pacientService, ExamService examService, JwtUtil jwtUtil) {
         this.pacientService = pacientService;
         this.examService = examService;
         this.jwtUtil = jwtUtil;

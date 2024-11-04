@@ -20,7 +20,7 @@ import co.edu.javeriana.glaucomapp_backend.clinical_history.model.exam.ExamsResp
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.pacient.PacientRequest;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.pacient.PacientResponse;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.service.ExamService;
-import co.edu.javeriana.glaucomapp_backend.clinical_history.service.PacientService;
+import co.edu.javeriana.glaucomapp_backend.clinical_history.service.PatientService;
 import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
 import co.edu.javeriana.glaucomapp_backend.common.exceptions.UnauthorizedException;
 
@@ -30,7 +30,7 @@ import java.util.UUID;
 
 public class CHControllerTest {
     @Mock
-    private PacientService pacientService;
+    private PatientService pacientService;
 
     @Mock
     private ExamService examService;

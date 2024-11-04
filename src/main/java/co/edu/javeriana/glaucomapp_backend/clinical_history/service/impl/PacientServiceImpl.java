@@ -45,14 +45,14 @@ import co.edu.javeriana.glaucomapp_backend.clinical_history.model.pacient.Pacien
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.pacient.PacientResponse;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.repository.ExamRepository;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.repository.PacientRepository;
-import co.edu.javeriana.glaucomapp_backend.clinical_history.service.PacientService;
+import co.edu.javeriana.glaucomapp_backend.clinical_history.service.PatientService;
 import co.edu.javeriana.glaucomapp_backend.clinical_history.service.ReviewOphthalmologistEvent;
 import co.edu.javeriana.glaucomapp_backend.s3.exposed.S3Service;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
 @Service
-public class PacientServiceImpl implements PacientService {
+public class PacientServiceImpl implements PatientService {
 
     private final PacientRepository pacientRepository;
     

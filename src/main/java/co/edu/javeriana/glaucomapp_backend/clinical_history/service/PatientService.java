@@ -15,7 +15,7 @@ import co.edu.javeriana.glaucomapp_backend.clinical_history.model.pacient.Pacien
 import co.edu.javeriana.glaucomapp_backend.clinical_history.model.pacient.PacientResponse;
 
 @Service
-public interface PacientService {
+public interface PatientService {
     public void savePacient(PacientRequest pacient, String ophtalId);
 
     public List<PacientResponse> getPacientsByOphtal(String ophtalIdString, int startIndex, int endIndex);
