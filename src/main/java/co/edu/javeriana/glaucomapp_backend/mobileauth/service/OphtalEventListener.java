@@ -24,6 +24,7 @@
 package co.edu.javeriana.glaucomapp_backend.mobileauth.service;
 
 import java.util.UUID;
+
 import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +33,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class OphtalEventHandler {
+public class OphtalEventListener {
 
     private final MyUserRepository userRepository;
 
