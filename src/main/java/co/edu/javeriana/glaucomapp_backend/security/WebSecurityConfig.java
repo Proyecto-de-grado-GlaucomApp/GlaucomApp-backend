@@ -140,7 +140,6 @@ public class WebSecurityConfig {
                  session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Stateless session management
              )
              .csrf(csrf -> csrf.disable()); // Disable CSRF protection for APIs
- 
          return http.build();
      }
 
@@ -167,27 +166,20 @@ public class WebSecurityConfig {
     @Order(3)
     public SecurityFilterChain apiKeySecurityFilterChain(HttpSecurity http) throws Exception {
         http
-        .securityMatcher("/glaucoma-screening")
+            .securityMatcher("/api/v1/glaucoma-screening/**") // Corregido para coincidir con el filtro
             .addFilterBefore(new ApiKeyFilter(authServiceHelper), AnonymousAuthenticationFilter.class)
             .authorizeHttpRequests(requests -> 
                 requests
-                    .requestMatchers("/glaucoma-screening/mobile/**").permitAll()
-                    .requestMatchers("/glaucoma-screening/upload-image").permitAll()
-                    // Allow all requests to /glaucoma-screening/mobile/**
-                    .requestMatchers("/glaucoma-screening/third-party/**").authenticated() // Require authentication for /glaucoma-screening/third-party/**
-                    .requestMatchers("/glaucoma-screening/path").permitAll() // Require ADMIN role for /glaucoma-screening/admin/**
-                    .anyRequest().permitAll() // Require authentication for all other requests
-                    )
-                    
-            .sessionManagement(session -> 
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Stateless session management
+                    .requestMatchers("/api/v1/glaucoma-screening/**").authenticated()
+                    .anyRequest().authenticated()
             )
-            .csrf(csrf -> csrf.disable()); // Disable CSRF protection for APIs
-
+            .sessionManagement(session -> 
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .csrf(csrf -> csrf.disable());
         return http.build();
     }
-
-        // A los que tienen auth no poner filtro
+            // A los que tienen auth no poner filtro
         @Bean
         @Order(2)
         public SecurityFilterChain noFilterSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -203,7 +195,6 @@ public class WebSecurityConfig {
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Stateless session management
                 )
                 .csrf(csrf -> csrf.disable()); // Disable CSRF protection for APIs
-    
             return http.build();
         }
         
@@ -234,12 +225,10 @@ public class WebSecurityConfig {
                     .anyRequest().permitAll() // Cualquier otra petición debe estar autenticada
             )
                     .addFilterBefore(jwtAuthenticationFilterWeb(), UsernamePasswordAuthenticationFilter.class); // Añadir el filtro JWT
-
- 
         return http.build();
     }
     
 
 
-    
+
 }

@@ -51,20 +51,16 @@ public class ApiKeyFilter extends GenericFilterBean {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
-
-        /*Checks if the request is directed to the "/glaucoma-screening/third-party" endpoint.
-         *If not, access is allowed without requiring an API key, 
-         *and the filter chain continues to the next filter.
-        */
-        if (!httpRequest.getRequestURI().startsWith("/glaucoma-screening")) {
-            chain.doFilter(request, response);
-            System.err.println("Request: " + httpRequest.getRequestURI());
-            System.err.println("Request is not directed to the /glaucoma-screening/third-party endpoint");
-            return;
-        }
-
+                HttpServletRequest httpRequest = (HttpServletRequest) request;
+                HttpServletResponse httpResponse = (HttpServletResponse) response;
+            
+                String requestUri = httpRequest.getRequestURI();
+            
+                if (!requestUri.startsWith("/api/v1/glaucoma-screening")) {
+                    chain.doFilter(request, response);
+                    return;
+                }
+            
 
         // Retrieve API key from request header
         String apiKey = httpRequest.getHeader("X-API-KEY");

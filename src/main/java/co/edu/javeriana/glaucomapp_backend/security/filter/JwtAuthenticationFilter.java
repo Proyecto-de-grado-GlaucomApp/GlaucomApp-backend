@@ -54,13 +54,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
       @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
-        System.out.println("AuthHeader: " + authHeader);
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
         if (!httpRequest.getRequestURI().startsWith("/mobile/glaucoma-screening") || !httpRequest.getRequestURI().startsWith("/mobile/clinical_history")) {
             filterChain.doFilter(request, response);
-            //System.err.println("Request: " + httpRequest.getRequestURI());
             return;
         }
         
@@ -75,12 +73,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
         }
  
         String jwt = authHeader.substring(7).trim();
-        System.out.println("JWT Token after trim: '" + jwt + "' Length: " + jwt.length());
         String username = jwtUtil.extractSubject(jwt);
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = myUserDetailService.loadUserByUsername(username);
             if (userDetails != null && jwtUtil.isTokenValid(jwt)) {
-                System.out.println("passing if on jtwauthenticatiofilter");
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                         username,
                         userDetails.getPassword(),
