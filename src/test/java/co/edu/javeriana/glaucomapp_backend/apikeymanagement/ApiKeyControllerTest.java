@@ -156,27 +156,27 @@ class ApiKeyControllerTest {
         Exception generalException = new Exception("Some error");
 
         // Act & Assert for EmailAlreadyExistsException
-        ResponseEntity<String> response = apiKeyController.new GlobalExceptionHandler().handleEmailAlreadyExists(emailException);
+        ResponseEntity<String> response = new ApiKeyController.GlobalExceptionHandler().handleEmailAlreadyExists(emailException);
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
         assertEquals("Email already exists", response.getBody());
 
         // Act & Assert for ApiKeyAlreadyExistsException
-        response = apiKeyController.new GlobalExceptionHandler().handleApiKeyAlreadyExists(apiKeyException);
+        response = new ApiKeyController.GlobalExceptionHandler().handleApiKeyAlreadyExists(apiKeyException);
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
         assertEquals("API Key already exists", response.getBody());
 
         // Act & Assert for UnauthorizedException
-        response = apiKeyController.new GlobalExceptionHandler().handleUnauthorizedException(unauthorizedException);
+        response = new ApiKeyController.GlobalExceptionHandler().handleUnauthorizedException(unauthorizedException);
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertEquals("Unauthorized", response.getBody());
 
         // Act & Assert for ApiKeyNotFoundException
-        response = apiKeyController.new GlobalExceptionHandler().handleApiKeyNotFoundException(notFoundException);
+        response = new ApiKeyController.GlobalExceptionHandler().handleApiKeyNotFoundException(notFoundException);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertEquals("API Key not found", response.getBody());
 
         // Act & Assert for general exception
-        response = apiKeyController.new GlobalExceptionHandler().handleGeneralException(generalException);
+        response = new ApiKeyController.GlobalExceptionHandler().handleGeneralException(generalException);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertEquals("An error occurred: Some error", response.getBody());
     }

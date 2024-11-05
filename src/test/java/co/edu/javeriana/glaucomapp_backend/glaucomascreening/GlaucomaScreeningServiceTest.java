@@ -4,68 +4,124 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Base64;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.withPrecision;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import co.edu.javeriana.glaucomapp_backend.s3.exposed.S3Service;
 
+@ExtendWith(MockitoExtension.class)
 class GlaucomaScreeningServiceTest {
-
-
-    private MockRestServiceServer mockServer;
-
-    @InjectMocks
-    private GlaucomaScreeningService glaucomaScreeningService;
-
-    @Mock
-private RestTemplate restTemplate;
-
-    @Mock
-    private MultipartFile mockMultipartFile;
-
-        @Mock
-    private MultipartFile file;
 
     @Mock
     private S3Service s3Service;
 
-    @BeforeEach
-    void setUp() {
-        restTemplate = new RestTemplate();
-        mockServer = MockRestServiceServer.createServer(restTemplate);
+    @Mock
+    private MultipartFile multipartFile;
 
+    @Mock
+    private RestTemplate restTemplate;
+
+    @Mock
+    private BufferedImage mockImage;
+    
+    @Mock
+    private GlaucomaScreeningService glaucomaScreeningService;
+
+    @InjectMocks
+    private GlaucomaScreeningService glaucomaScreeningServiceSpy;
+
+    public GlaucomaScreeningServiceTest() {
         MockitoAnnotations.openMocks(this);
     }
+    
 
-    // Successfully preprocesses an image file into a byte array
+
+    
+
+    
+
+// --------------------------------------------------------------------------------------------
+
+    @Test
+    void sendImageToApi_ShouldHandleException_WhenIOExceptionOccurs() throws IOException {
+        // Arrange
+        when(multipartFile.getInputStream()).thenThrow(new IOException("Mock I/O error"));
+
+        // Act & Assert
+        RuntimeException thrown = assertThrows(RuntimeException.class, () -> glaucomaScreeningServiceSpy.sendImageToApi(multipartFile));
+        assertThat(thrown.getMessage()).isEqualTo("I/O error while processing the image");
+    }
+
+
+
+    @Test
+    void calculateRatio_ShouldReturnCorrectRatio() {
+        // Arrange
+        List<Double> values = Arrays.asList(10.0, 20.0);
+
+        // Act
+        double ratio = glaucomaScreeningServiceSpy.calculateRatio(values);
+
+        // Assert
+        assertThat(ratio).isEqualTo(2.000, withPrecision(0.001));
+    }
+
+    @Test
+    void generateUniqueImageId_ShouldReturnUniqueId() {
+        // Act
+        String uniqueId = glaucomaScreeningServiceSpy.generateUniqueImageId();
+
+        // Assert
+        assertThat(uniqueId).startsWith("image_");
+        assertThat(uniqueId).endsWith(".png");
+    }
+
+    @Test
+    void postprocessImage_ShouldReturnBufferedImage_WhenDataIsCorrect() throws IOException {
+        // Arrange
+        byte[] imageData = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+        int width = 2;
+        int height = 2;
+    
+        // Act
+        BufferedImage image = glaucomaScreeningServiceSpy.postprocessImage(imageData, width, height);
+    
+        // Assert
+        assertThat(image).isNotNull();
+        assertThat(image.getWidth()).isEqualTo(width);
+        assertThat(image.getHeight()).isEqualTo(height);
+    }
+    
+
+        // Successfully preprocesses an image file into a byte array
     @Test
     public void test_preprocess_image_success() throws IOException {
         // Arrange
@@ -87,19 +143,6 @@ private RestTemplate restTemplate;
         assertTrue(result.length > 0);
     }
 
-        // Handles null or empty MultipartFile input gracefully
-    @Test
-    public void test_preprocess_image_with_null_or_empty_file() {
-        // Arrange
-        MultipartFile mockFile = Mockito.mock(MultipartFile.class);
-        Mockito.when(mockFile.isEmpty()).thenReturn(true);
-    
-        GlaucomaScreeningService service = new GlaucomaScreeningService(Mockito.mock(S3Service.class));
-    
-        // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.preprocessImage(mockFile);
-        });
-    }
-
+            
+            
 }

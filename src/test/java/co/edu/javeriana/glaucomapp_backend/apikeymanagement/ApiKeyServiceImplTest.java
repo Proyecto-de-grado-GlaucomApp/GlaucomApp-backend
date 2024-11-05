@@ -66,15 +66,18 @@ public class ApiKeyServiceImplTest {
     public void testGenerateApiKeyWhenExistingKeyThrowsException() {
         // Arrange
         Long userId = 1L; // Sample user ID for testing
-        when(apiKeyRepository.findByUserApiIdAndStatusIn(userId, List.of(ApiKeyStatus.PENDING, ApiKeyStatus.ACTIVE)))
+        when(apiKeyRepository.findByUserApiIdAndStatus(userId, ApiKeyStatus.ACTIVE))
                 .thenReturn(Optional.of(new ApiKey()));
-
+        when(apiKeyRepository.findByUserApiIdAndStatus(userId, ApiKeyStatus.PENDING))
+                .thenReturn(Optional.empty()); // O puedes ajustar para simular una clave pendiente si es necesario.
+    
         // Act & Assert
         ApiKeyAlreadyExistsException exception = assertThrows(ApiKeyAlreadyExistsException.class, () -> {
             apiKeyService.generateApiKeyByUser(userId); // Call the service method
         });
         assertNotNull(exception); // Check if the exception is thrown
     }
+    
 
     // Test saving a newly generated API key to the repository successfully
     @Test

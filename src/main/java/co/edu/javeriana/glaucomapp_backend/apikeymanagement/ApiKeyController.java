@@ -2,9 +2,12 @@ package co.edu.javeriana.glaucomapp_backend.apikeymanagement;
 
 import java.util.List;
 
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,12 +53,12 @@ public class ApiKeyController {
      * @param userId the ID of the user for whom to generate an API key
      * @return ResponseEntity containing the generated API key with HTTP status 201 (Created)
      */
-    @PostMapping("/users/{userId}")
-    @ValidateJwtId(paramName = "userId") // Validate JWT token with the user ID
-    public ResponseEntity<ApiKey> generateApiKey(@PathVariable Long userId) {
-        ApiKey apiKey = apiKeyService.generateApiKeyByUser(userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(apiKey); // Return 201 Created
-    }
+        @PostMapping("/users/{userId}")
+        @ValidateJwtId(paramName = "userId") // Validate JWT token with the user ID
+        public ResponseEntity<ApiKey> generateApiKey(@PathVariable Long userId) {
+            ApiKey apiKey = apiKeyService.generateApiKeyByUser(userId);
+            return ResponseEntity.status(HttpStatus.CREATED).body(apiKey); // Return 201 Created
+        }
 
     /**
      * Endpoint to retrieve the API key for a specific user.
@@ -133,73 +136,45 @@ public class ApiKeyController {
     /**
      * Global exception handler for managing exceptions throughout the API.
      */
-    @RestControllerAdvice
-    public class GlobalExceptionHandler {
+ @RestControllerAdvice
+@ControllerAdvice
+    static class GlobalExceptionHandler {
 
-        /**
-         * Handles EmailAlreadyExistsException and returns a conflict status.
-         *
-         * @param ex the exception to handle
-         * @return ResponseEntity with HTTP status 409 (Conflict) and the exception message
-         */
-        @ExceptionHandler(EmailAlreadyExistsException.class)
-        public ResponseEntity<String> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
-        }
-
-        /**
-         * Handles any general exception and returns an internal server error status.
-         *
-         * @param ex the exception to handle
-         * @return ResponseEntity with HTTP status 500 (Internal Server Error) and a generic message
-         */
-        @ExceptionHandler(Exception.class)
-        public ResponseEntity<String> handleGeneralException(Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred: " + ex.getMessage());
-        }
-
-        /**
-         * Handles ApiKeyAlreadyExistsException and returns a conflict status.
-         *
-         * @param ex the exception to handle
-         * @return ResponseEntity with HTTP status 409 (Conflict) and the exception message
-         */
         @ExceptionHandler(ApiKeyAlreadyExistsException.class)
+        @Order(Ordered.HIGHEST_PRECEDENCE)
         public ResponseEntity<String> handleApiKeyAlreadyExists(ApiKeyAlreadyExistsException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
         }
 
-        /**
-         * Handles UnauthorizedException and returns an unauthorized status.
-         *
-         * @param ex the exception to handle
-         * @return ResponseEntity with HTTP status 401 (Unauthorized) and the exception message
-         */
+        @ExceptionHandler(EmailAlreadyExistsException.class)
+        @Order(Ordered.HIGHEST_PRECEDENCE)
+        public ResponseEntity<String> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+        }
+
+        @ExceptionHandler(ApiKeyAlreadyApprovedException.class)
+        @Order(Ordered.HIGHEST_PRECEDENCE)
+        public ResponseEntity<String> handleApiKeyAlreadyApproved(ApiKeyAlreadyApprovedException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+        }
+
         @ExceptionHandler(UnauthorizedException.class)
+        @Order(Ordered.HIGHEST_PRECEDENCE)
         public ResponseEntity<String> handleUnauthorizedException(UnauthorizedException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
         }
 
-        /**
-         * Handles ApiKeyNotFoundException and returns a not found status.
-         *
-         * @param ex the exception to handle
-         * @return ResponseEntity with HTTP status 404 (Not Found) and the exception message
-         */
         @ExceptionHandler(ApiKeyNotFoundException.class)
+        @Order(Ordered.HIGHEST_PRECEDENCE)
         public ResponseEntity<String> handleApiKeyNotFoundException(ApiKeyNotFoundException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
         }
 
-        /**
-         * Handles ApiKeyAlreadyApprovedException and returns a conflict status.
-         *
-         * @param ex the exception to handle
-         * @return ResponseEntity with HTTP status 409 (Conflict) and the exception message
-         */
-        @ExceptionHandler(ApiKeyAlreadyApprovedException.class)
-        public ResponseEntity<String> handleApiKeyAlreadyApproved(ApiKeyAlreadyApprovedException ex) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+        @ExceptionHandler(Exception.class)
+        @Order(Ordered.LOWEST_PRECEDENCE)
+        public ResponseEntity<String> handleGeneralException(Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An error occurred: " + ex.getMessage());
         }
     }
 }

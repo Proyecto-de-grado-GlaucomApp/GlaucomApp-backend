@@ -42,8 +42,11 @@ public class ApiKeyServiceImpl implements ApiKeyExternalService, ApiKeyInternalS
     @Override
     public ApiKey generateApiKeyByUser(Long userId) {
         // If the user has a key that is pending or active, throw an exception
-        if (apiKeyRepository.findByUserApiIdAndStatusIn(userId, List.of(ApiKeyStatus.PENDING, ApiKeyStatus.ACTIVE)).isPresent()) {
-            throw new ApiKeyAlreadyExistsException("User already has an active or pending API key");
+        if (apiKeyRepository.findByUserApiIdAndStatus(userId, ApiKeyStatus.ACTIVE).isPresent()) {
+            System.out.println("User already has an active API key");
+            throw new ApiKeyAlreadyExistsException("User already has an active API key");
+        } else if (apiKeyRepository.findByUserApiIdAndStatus(userId, ApiKeyStatus.PENDING).isPresent()) {
+            throw new ApiKeyAlreadyExistsException("User already has an pending API key");
         }
         
         // Generate a new API key
