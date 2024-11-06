@@ -133,9 +133,9 @@ public class GlaucomaScreeningService {
     }
 
     protected void calculateRatiosAndSetResult(ImageProcessingResultDTO processresult, ServerResultDTO result) {
-        processresult.setDistanceRatio(calculateRatio(result.getDistances()));
-        processresult.setPerimeterRatio(calculateRatio(result.getPerimeters()));
-        processresult.setAreaRatio(calculateRatio(result.getAreas()));
+        processresult.setDistanceRatio(calculateRatio(result.getDistances()) * 100);
+        processresult.setPerimeterRatio(calculateRatio(result.getPerimeters())* 100);
+        processresult.setAreaRatio(calculateRatio(result.getAreas())* 100);
         processresult.setDdlStage(calculateDDLStage(processresult.getDistanceRatio()));
         processresult.setState(calculateState(processresult.getDdlStage()));
     }
