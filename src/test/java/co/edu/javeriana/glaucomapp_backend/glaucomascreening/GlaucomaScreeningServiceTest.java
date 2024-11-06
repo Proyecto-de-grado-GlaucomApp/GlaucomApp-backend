@@ -4,7 +4,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -18,20 +17,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -62,14 +55,6 @@ class GlaucomaScreeningServiceTest {
         MockitoAnnotations.openMocks(this);
     }
     
-
-
-    
-
-    
-
-// --------------------------------------------------------------------------------------------
-
     @Test
     void sendImageToApi_ShouldHandleException_WhenIOExceptionOccurs() throws IOException {
         // Arrange
@@ -79,8 +64,6 @@ class GlaucomaScreeningServiceTest {
         RuntimeException thrown = assertThrows(RuntimeException.class, () -> glaucomaScreeningServiceSpy.sendImageToApi(multipartFile));
         assertThat(thrown.getMessage()).isEqualTo("I/O error while processing the image");
     }
-
-
 
     @Test
     void calculateRatio_ShouldReturnCorrectRatio() {
@@ -119,9 +102,7 @@ class GlaucomaScreeningServiceTest {
         assertThat(image.getWidth()).isEqualTo(width);
         assertThat(image.getHeight()).isEqualTo(height);
     }
-    
 
-        // Successfully preprocesses an image file into a byte array
     @Test
     public void test_preprocess_image_success() throws IOException {
         // Arrange
@@ -143,6 +124,48 @@ class GlaucomaScreeningServiceTest {
         assertTrue(result.length > 0);
     }
 
-            
+    @Test
+    void handleApiError_ShouldThrowRuntimeException_WhenClientErrorOccurs() {
+        // Arrange
+        ResponseEntity<String> mockResponse = new ResponseEntity<>("Client error", HttpStatus.BAD_REQUEST);
+
+        // Act & Assert
+        RuntimeException thrown = assertThrows(RuntimeException.class, () -> glaucomaScreeningServiceSpy.handleApiError(mockResponse));
+        assertThat(thrown.getMessage()).isEqualTo("Client error from external API: 400 BAD_REQUEST");
+    }
+
+    @Test
+    void handleApiError_ShouldThrowRuntimeException_WhenServerErrorOccurs() {
+        // Arrange
+        ResponseEntity<String> mockResponse = new ResponseEntity<>("Server error", HttpStatus.INTERNAL_SERVER_ERROR);
+
+        // Act & Assert
+        RuntimeException thrown = assertThrows(RuntimeException.class, () -> glaucomaScreeningServiceSpy.handleApiError(mockResponse));
+        assertThat(thrown.getMessage()).isEqualTo("Server error from external API: 500 INTERNAL_SERVER_ERROR");
+    }
+
+    @Test
+    void calculateDDLStage_ShouldReturnCorrectStage() {
+        // Act & Assert
+        assertEquals(1, glaucomaScreeningServiceSpy.calculateDDLStage(0.4));
+        assertEquals(2, glaucomaScreeningServiceSpy.calculateDDLStage(0.3));
+        assertEquals(3, glaucomaScreeningServiceSpy.calculateDDLStage(0.2));
+        assertEquals(4, glaucomaScreeningServiceSpy.calculateDDLStage(0.1));
+        assertEquals(5, glaucomaScreeningServiceSpy.calculateDDLStage(0.05));
+        assertEquals(6, glaucomaScreeningServiceSpy.calculateDDLStage(0.0));
+    }
+
+    @Test
+    void calculateState_ShouldReturnCorrectState() {
+        // Act & Assert
+        assertEquals(GlaucomaStatus.AT_RISK.getCode(), glaucomaScreeningServiceSpy.calculateState(1));
+        assertEquals(GlaucomaStatus.AT_RISK.getCode(), glaucomaScreeningServiceSpy.calculateState(2));
+        assertEquals(GlaucomaStatus.AT_RISK.getCode(), glaucomaScreeningServiceSpy.calculateState(3));
+        assertEquals(GlaucomaStatus.AT_RISK.getCode(), glaucomaScreeningServiceSpy.calculateState(4));
+        assertEquals(GlaucomaStatus.GLAUCOMA_DAMAGE.getCode(), glaucomaScreeningServiceSpy.calculateState(5));
+        assertEquals(GlaucomaStatus.GLAUCOMA_DAMAGE.getCode(), glaucomaScreeningServiceSpy.calculateState(6));
+        assertEquals(GlaucomaStatus.GLAUCOMA_DISABILITY.getCode(), glaucomaScreeningServiceSpy.calculateState(8));
+    }
+  
             
 }
