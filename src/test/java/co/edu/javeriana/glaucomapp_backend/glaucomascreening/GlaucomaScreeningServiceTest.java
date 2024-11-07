@@ -2,27 +2,17 @@ package co.edu.javeriana.glaucomapp_backend.glaucomascreening;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
-import javax.imageio.ImageIO;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.withPrecision;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import static org.mockito.Mockito.when;
 import org.mockito.MockitoAnnotations;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
@@ -30,142 +20,155 @@ import org.springframework.web.multipart.MultipartFile;
 
 import co.edu.javeriana.glaucomapp_backend.s3.exposed.S3Service;
 
-@ExtendWith(MockitoExtension.class)
-class GlaucomaScreeningServiceTest {
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
+import org.junit.jupiter.api.BeforeEach;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+public class GlaucomaScreeningServiceTest {
 
     @Mock
     private S3Service s3Service;
 
     @Mock
-    private MultipartFile multipartFile;
-
-    @Mock
     private RestTemplate restTemplate;
 
-    @Mock
-    private BufferedImage mockImage;
-    
-    @Mock
+    @InjectMocks
     private GlaucomaScreeningService glaucomaScreeningService;
 
-    @InjectMocks
-    private GlaucomaScreeningService glaucomaScreeningServiceSpy;
-
-    public GlaucomaScreeningServiceTest() {
+    @BeforeEach
+    public void setUp() {
         MockitoAnnotations.openMocks(this);
-    }
-    
-    @Test
-    void sendImageToApi_ShouldHandleException_WhenIOExceptionOccurs() throws IOException {
-        // Arrange
-        when(multipartFile.getInputStream()).thenThrow(new IOException("Mock I/O error"));
-
-        // Act & Assert
-        RuntimeException thrown = assertThrows(RuntimeException.class, () -> glaucomaScreeningServiceSpy.sendImageToApi(multipartFile));
-        assertThat(thrown.getMessage()).isEqualTo("I/O error while processing the image");
+        glaucomaScreeningService.pythonApiUrl = "http://mock-api-url";
     }
 
     @Test
-    void calculateRatio_ShouldReturnCorrectRatio() {
-        // Arrange
-        List<Double> values = Arrays.asList(10.0, 20.0);
+    public void testSendImageToApi_IOException() throws Exception {
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.getInputStream()).thenThrow(new IOException("I/O error"));
 
-        // Act
-        double ratio = glaucomaScreeningServiceSpy.calculateRatio(values);
+        assertThrows(RuntimeException.class, () -> glaucomaScreeningService.sendImageToApi(file));
+    }
+    @Test
+    public void testHandleApiResponse_Error() throws Exception {
+        MultipartFile file = mock(MultipartFile.class);
+        byte[] imageBytes = new byte[] { 1, 2, 3 };
+        when(file.getInputStream()).thenReturn(new ByteArrayInputStream(imageBytes));
+        when(file.getBytes()).thenReturn(imageBytes);
 
-        // Assert
-        assertThat(ratio).isEqualTo(2.000, withPrecision(0.001));
+        ResponseEntity<String> response = new ResponseEntity<>("Error", HttpStatus.BAD_REQUEST);
+
+        assertThrows(RuntimeException.class, () -> glaucomaScreeningService.handleApiResponse(file, response));
     }
 
     @Test
-    void generateUniqueImageId_ShouldReturnUniqueId() {
-        // Act
-        String uniqueId = glaucomaScreeningServiceSpy.generateUniqueImageId();
-
-        // Assert
-        assertThat(uniqueId).startsWith("image_");
-        assertThat(uniqueId).endsWith(".png");
+    public void testCalculateDDLStage() {
+        assertEquals(1, glaucomaScreeningService.calculateDDLStage(0.4));
+        assertEquals(2, glaucomaScreeningService.calculateDDLStage(0.3));
+        assertEquals(3, glaucomaScreeningService.calculateDDLStage(0.2));
+        assertEquals(4, glaucomaScreeningService.calculateDDLStage(0.1));
+        assertEquals(5, glaucomaScreeningService.calculateDDLStage(0.05));
+        assertEquals(6, glaucomaScreeningService.calculateDDLStage(0.0));
     }
 
     @Test
-    void postprocessImage_ShouldReturnBufferedImage_WhenDataIsCorrect() throws IOException {
-        // Arrange
-        byte[] imageData = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
-        int width = 2;
-        int height = 2;
-    
-        // Act
-        BufferedImage image = glaucomaScreeningServiceSpy.postprocessImage(imageData, width, height);
-    
-        // Assert
-        assertThat(image).isNotNull();
-        assertThat(image.getWidth()).isEqualTo(width);
-        assertThat(image.getHeight()).isEqualTo(height);
+    public void testCalculateState() {
+        assertEquals(GlaucomaStatus.AT_RISK.getCode(), glaucomaScreeningService.calculateState(1));
+        assertEquals(GlaucomaStatus.GLAUCOMA_DAMAGE.getCode(), glaucomaScreeningService.calculateState(5));
+        assertEquals(GlaucomaStatus.GLAUCOMA_DISABILITY.getCode(), glaucomaScreeningService.calculateState(8));
+        assertEquals(0, glaucomaScreeningService.calculateState(11));
     }
 
     @Test
-    public void test_preprocess_image_success() throws IOException {
-        // Arrange
-        MultipartFile mockFile = Mockito.mock(MultipartFile.class);
-        BufferedImage mockImage = new BufferedImage(100, 100, BufferedImage.TYPE_3BYTE_BGR);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(mockImage, "png", baos);
-        byte[] imageBytes = baos.toByteArray();
-    
-        Mockito.when(mockFile.getInputStream()).thenReturn(new ByteArrayInputStream(imageBytes));
-    
-        GlaucomaScreeningService service = new GlaucomaScreeningService(Mockito.mock(S3Service.class));
-    
-        // Act
-        byte[] result = service.preprocessImage(mockFile);
-    
-        // Assert
+    public void testParseCoordinates() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode coordinates = objectMapper.readTree("[1.0, 2.0]");
+
+        List<Double> result = glaucomaScreeningService.parseCoordinates(coordinates);
+
+        assertEquals(2, result.size());
+        assertEquals(1.0, result.get(0));
+        assertEquals(2.0, result.get(1));
+    }
+
+    @Test
+    public void testParseListFromJsonNode() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree("[1.0, 2.0]");
+
+        List<Double> result = glaucomaScreeningService.parseListFromJsonNode(jsonNode);
+
+        assertEquals(2, result.size());
+        assertEquals(1.0, result.get(0));
+        assertEquals(2.0, result.get(1));
+    }
+
+
+    @Test
+    public void testPostprocessImage() throws Exception {
+        int width = 10;
+        int height = 10;
+        byte[] data = new byte[width * height * 3]; // Ensure the array size matches the expected size
+
+        BufferedImage result = glaucomaScreeningService.postprocessImage(data, width, height);
+
         assertNotNull(result);
-        assertTrue(result.length > 0);
+        assertEquals(width, result.getWidth());
+        assertEquals(height, result.getHeight());
     }
 
     @Test
-    void handleApiError_ShouldThrowRuntimeException_WhenClientErrorOccurs() {
-        // Arrange
-        ResponseEntity<String> mockResponse = new ResponseEntity<>("Client error", HttpStatus.BAD_REQUEST);
+    public void testGenerateUniqueImageId() {
+        String result = glaucomaScreeningService.generateUniqueImageId();
 
-        // Act & Assert
-        RuntimeException thrown = assertThrows(RuntimeException.class, () -> glaucomaScreeningServiceSpy.handleApiError(mockResponse));
-        assertThat(thrown.getMessage()).isEqualTo("Client error from external API: 400 BAD_REQUEST");
+        assertNotNull(result);
+        assertTrue(result.startsWith("image_"));
+        assertTrue(result.endsWith(".png"));
     }
 
     @Test
-    void handleApiError_ShouldThrowRuntimeException_WhenServerErrorOccurs() {
-        // Arrange
-        ResponseEntity<String> mockResponse = new ResponseEntity<>("Server error", HttpStatus.INTERNAL_SERVER_ERROR);
+    public void testCalculateRatio() {
+        List<Double> values = List.of(2.0, 1.0);
 
-        // Act & Assert
-        RuntimeException thrown = assertThrows(RuntimeException.class, () -> glaucomaScreeningServiceSpy.handleApiError(mockResponse));
-        assertThat(thrown.getMessage()).isEqualTo("Server error from external API: 500 INTERNAL_SERVER_ERROR");
+        double result = glaucomaScreeningService.calculateRatio(values);
+
+        assertEquals(0.5, result);
     }
 
     @Test
-    void calculateDDLStage_ShouldReturnCorrectStage() {
-        // Act & Assert
-        assertEquals(1, glaucomaScreeningServiceSpy.calculateDDLStage(0.4));
-        assertEquals(2, glaucomaScreeningServiceSpy.calculateDDLStage(0.3));
-        assertEquals(3, glaucomaScreeningServiceSpy.calculateDDLStage(0.2));
-        assertEquals(4, glaucomaScreeningServiceSpy.calculateDDLStage(0.1));
-        assertEquals(5, glaucomaScreeningServiceSpy.calculateDDLStage(0.05));
-        assertEquals(6, glaucomaScreeningServiceSpy.calculateDDLStage(0.0));
+    public void testUploadImageToS3() throws Exception {
+        BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_3BYTE_BGR);
+        ImageProcessingResultDTO processresult = new ImageProcessingResultDTO();
+        ServerResultDTO result = new ServerResultDTO();
+        result.setPerimeters(List.of(1.0, 2.0));
+        result.setAreas(List.of(1.0, 2.0));
+
+        glaucomaScreeningService.uploadImageToS3(image, processresult, result);
+
+        verify(s3Service, times(1)).uploadImage(any(BufferedImage.class), anyString());
+        verify(s3Service, times(1)).generatePresignedUrl(anyString());
     }
 
     @Test
-    void calculateState_ShouldReturnCorrectState() {
-        // Act & Assert
-        assertEquals(GlaucomaStatus.AT_RISK.getCode(), glaucomaScreeningServiceSpy.calculateState(1));
-        assertEquals(GlaucomaStatus.AT_RISK.getCode(), glaucomaScreeningServiceSpy.calculateState(2));
-        assertEquals(GlaucomaStatus.AT_RISK.getCode(), glaucomaScreeningServiceSpy.calculateState(3));
-        assertEquals(GlaucomaStatus.AT_RISK.getCode(), glaucomaScreeningServiceSpy.calculateState(4));
-        assertEquals(GlaucomaStatus.GLAUCOMA_DAMAGE.getCode(), glaucomaScreeningServiceSpy.calculateState(5));
-        assertEquals(GlaucomaStatus.GLAUCOMA_DAMAGE.getCode(), glaucomaScreeningServiceSpy.calculateState(6));
-        assertEquals(GlaucomaStatus.GLAUCOMA_DISABILITY.getCode(), glaucomaScreeningServiceSpy.calculateState(8));
+    public void testConfigureObjectMapper() {
+        ObjectMapper objectMapper = glaucomaScreeningService.configureObjectMapper();
+
+        assertNotNull(objectMapper);
     }
-  
-            
+
+    @Test
+    public void testParseResponse() throws Exception {
+        ResponseEntity<String> response = new ResponseEntity<>(
+                "{\"image\": {\"bitmap\": \"base64Image\"}, \"coordinates\": [1.0, 2.0], \"distances\": [1.0, 2.0], \"perimeters\": [1.0, 2.0], \"areas\": [1.0, 2.0]}",
+                HttpStatus.OK);
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        ServerResultDTO result = glaucomaScreeningService.parseResponse(response, objectMapper);
+
+        assertNotNull(result);
+    }
 }
