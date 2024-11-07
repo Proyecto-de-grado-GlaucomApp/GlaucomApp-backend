@@ -33,8 +33,7 @@ spring:
 
   sql:
     init:
-      mode: always  # or 'embedded' if you want to limit it to embedded databases
-      schema: classpath:schema.sql  # Point to your schema file
+      mode: never
 
   modulith:
     republish-outstanding-events-on-restart: false
