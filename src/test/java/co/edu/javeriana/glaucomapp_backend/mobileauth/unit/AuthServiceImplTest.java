@@ -4,10 +4,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+
 import java.util.Optional;
 import java.util.UUID;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -18,6 +20,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
 import co.edu.javeriana.glaucomapp_backend.common.JwtUtil;
 import co.edu.javeriana.glaucomapp_backend.mobileauth.exposed.MyUser;
 import co.edu.javeriana.glaucomapp_backend.mobileauth.model.LogInForm;
@@ -69,6 +72,18 @@ public class AuthServiceImplTest {
         assertNotNull(registeredUser);
         assertEquals("testuser", registeredUser.getUsername());
         verify(userRepository, times(1)).save(user);
+    }
+
+    @Test
+    public void testRegister_UsernameAlreadyInUse() {
+        MyUser user = new MyUser();
+        user.setUsername("testuser");
+        user.setPassword("password");
+        user.setName("Test User");
+
+        when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(user));
+
+        assertThrows(IllegalArgumentException.class, () -> authServiceImpl.register(user));
     }
 
     @Test

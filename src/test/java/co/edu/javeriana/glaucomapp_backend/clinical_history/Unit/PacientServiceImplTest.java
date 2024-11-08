@@ -119,6 +119,18 @@ class PacientServiceImplTest {
     }
 
     @Test
+    void testGetPacientsByOphtal_EmptyList() {
+        String ophtalIdString = UUID.randomUUID().toString();
+        UUID ophtalId = UUID.fromString(ophtalIdString);
+
+        when(pacientRepository.findAllPacientsByDoctorId(ophtalId)).thenReturn(new ArrayList<>());
+
+        List<PacientResponse> responses = pacientServiceImpl.getPacientsByOphtal(ophtalIdString, 0, 1);
+
+        assertTrue(responses.isEmpty());
+    }
+
+    @Test
     void testDeletePacientByOphtalAndPacientId() {
         String ophtalIdString = UUID.randomUUID().toString();
         String pacientIdString = UUID.randomUUID().toString();
@@ -157,6 +169,18 @@ class PacientServiceImplTest {
         when(pacient.getDoctorId()).thenReturn(UUID.randomUUID());
 
         assertThrows(AccessDeniedException.class,
+                () -> pacientServiceImpl.deletePacient(ophtalIdString, pacientIdString));
+    }
+
+    @Test
+    void testDeletePacientByOphtalAndPacientIdNotFound() {
+        String ophtalIdString = UUID.randomUUID().toString();
+        String pacientIdString = UUID.randomUUID().toString();
+        UUID pacientId = UUID.fromString(pacientIdString);
+
+        when(pacientRepository.findById(pacientId)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class,
                 () -> pacientServiceImpl.deletePacient(ophtalIdString, pacientIdString));
     }
 
