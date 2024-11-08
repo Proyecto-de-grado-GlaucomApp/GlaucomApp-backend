@@ -3,7 +3,6 @@ package co.edu.javeriana.glaucomapp_backend.security.filter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -17,8 +16,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -51,6 +48,7 @@ class JwtAuthenticationFilterTest {
     private SecurityContext securityContext;
 
     private final String validToken = "Bearer valid.jwt.token";
+    private final String invalidToken = "Bearer invalid.jwt.token";
     private final String username = "testUser";
 
     @AfterEach
@@ -92,4 +90,25 @@ class JwtAuthenticationFilterTest {
         verify(response, never()).sendError(anyInt(), anyString());
         verify(securityContext, never()).setAuthentication(any());
     }
-}    
+
+    @Test
+    void testDoFilterInternal_ValidToken_ShouldAuthenticate() throws Exception {
+        // Arrange
+        when(request.getRequestURI()).thenReturn("/mobile/glaucoma-screening/test");
+        when(request.getHeader("Authorization")).thenReturn(validToken);
+        when(jwtUtil.extractSubject(anyString())).thenReturn(username);
+        when(myUserDetailService.loadUserByUsername(anyString())).thenReturn(userDetails);
+        when(jwtUtil.isTokenValid(anyString())).thenReturn(true);
+        when(userDetails.getPassword()).thenReturn("password");
+        when(userDetails.getAuthorities()).thenReturn(null);
+
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert
+        verify(securityContext).setAuthentication(any(UsernamePasswordAuthenticationToken.class));
+        verify(filterChain).doFilter(request, response);
+        verify(response, never()).sendError(anyInt(), anyString());
+    }
+    
+}
