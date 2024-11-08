@@ -1,31 +1,28 @@
 /**
- * JwtAuthenticationFilter is a filter that intercepts HTTP requests to validate JWT tokens.
- * It extends OncePerRequestFilter to ensure that the filter is executed once per request.
- *
- * This filter checks the Authorization header for a Bearer token, extracts the JWT, and validates it.
+ * JwtAuthenticationFilter is a custom filter that extends OncePerRequestFilter to handle JWT-based authentication.
+ * It intercepts incoming HTTP requests and checks for the presence of a valid JWT token in the Authorization header.
  * If the token is valid, it sets the authentication in the SecurityContextHolder.
- *
+ * 
+ * The filter only applies to protected paths, specifically those starting with "/mobile/glaucoma-screening" or "/mobile/clinical_history".
+ * 
  * Dependencies:
- * - jwtUtil: Service to handle JWT operations such as extracting username and validating tokens.
- * - MyUserDetailService: Service to load user details by username.
- *
+ * - JwtUtil: Utility class for handling JWT operations such as extracting the subject and validating the token.
+ * - MyUserDetailService: Service for loading user details by username.
+ * 
+ * Constructor:
+ * - JwtAuthenticationFilter(JwtUtil jwtUtil, MyUserDetailService myUserDetailService): Initializes the filter with the provided JwtUtil and MyUserDetailService instances.
+ * 
  * Methods:
- * - doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain):
- *   This method is overridden to implement the filtering logic. It checks for the Authorization header,
- *   extracts and validates the JWT, and sets the authentication in the security context if the token is valid.
- *
- * Annotations:
- * - @Configuration: Indicates that this class is a configuration class.
- * - @Autowired: Marks the fields to be injected with their respective beans.
- *
- * @throws ServletException if an error occurs during the filtering process.
- * @throws IOException if an I/O error occurs during the filtering process.
+ * - doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain): 
+ *   Main method that performs the filtering logic. It checks the Authorization header for a valid JWT token and sets the authentication context if the token is valid.
+ * 
+ * Usage:
+ * This filter should be registered in the Spring Security filter chain to enable JWT-based authentication for the specified protected paths.
  */
+
 package co.edu.javeriana.glaucomapp_backend.security.filter;
  
 import java.io.IOException;
- 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
