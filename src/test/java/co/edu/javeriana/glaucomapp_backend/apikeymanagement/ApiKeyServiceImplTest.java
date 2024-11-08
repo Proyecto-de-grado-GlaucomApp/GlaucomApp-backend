@@ -61,7 +61,8 @@ public class ApiKeyServiceImplTest {
         assertEquals(userId, result.getUserApiId()); // Check the associated user ID
     }
 
-    // Test attempting to generate an API key for a user who already has an active or pending key
+    // Test attempting to generate an API key for a user who already has an active
+    // or pending key
     @Test
     public void testGenerateApiKeyWhenExistingKeyThrowsException() {
         // Arrange
@@ -70,14 +71,13 @@ public class ApiKeyServiceImplTest {
                 .thenReturn(Optional.of(new ApiKey()));
         when(apiKeyRepository.findByUserApiIdAndStatus(userId, ApiKeyStatus.PENDING))
                 .thenReturn(Optional.empty()); // O puedes ajustar para simular una clave pendiente si es necesario.
-    
+
         // Act & Assert
         ApiKeyAlreadyExistsException exception = assertThrows(ApiKeyAlreadyExistsException.class, () -> {
             apiKeyService.generateApiKeyByUser(userId); // Call the service method
         });
         assertNotNull(exception); // Check if the exception is thrown
     }
-    
 
     // Test saving a newly generated API key to the repository successfully
     @Test
@@ -169,7 +169,8 @@ public class ApiKeyServiceImplTest {
         when(apiKeyRepository.findByApiKey(nonExistingApiKey)).thenReturn(Optional.empty());
 
         // Act
-        boolean result = apiKeyService.isApiKeyValid(nonExistingApiKey); // Call the service method to validate the API key
+        boolean result = apiKeyService.isApiKeyValid(nonExistingApiKey); // Call the service method to validate the API
+                                                                         // key
 
         // Assert
         assertFalse(result); // Check if the validation result is false
@@ -189,23 +190,86 @@ public class ApiKeyServiceImplTest {
     }
 
     // Test deleting an API key by user throws exception on delete failure
-@Test
-public void testDeleteApiKeyByUserThrowsExceptionOnDeleteFailure() {
-    // Arrange: Configurar el entorno y las expectativas
-    Long userId = 1L; // ID del usuario para el cual se eliminará la API key
-    ApiKey pendingApiKey = new ApiKey();
-    pendingApiKey.setId(1L); // ID de la API key pendiente
-    pendingApiKey.setUserApiId(userId);
-    pendingApiKey.setStatus(ApiKeyStatus.PENDING);
+    @Test
+    public void testDeleteApiKeyByUserThrowsExceptionOnDeleteFailure() {
+        // Arrange: Configurar el entorno y las expectativas
+        Long userId = 1L; // ID del usuario para el cual se eliminará la API key
+        ApiKey pendingApiKey = new ApiKey();
+        pendingApiKey.setId(1L); // ID de la API key pendiente
+        pendingApiKey.setUserApiId(userId);
+        pendingApiKey.setStatus(ApiKeyStatus.PENDING);
 
-    // Simular el comportamiento del repositorio
-    when(apiKeyRepository.findByUserApiIdAndStatus(userId, ApiKeyStatus.PENDING)).thenReturn(Optional.of(pendingApiKey));
-    doThrow(new RuntimeException("Deletion failed")).when(apiKeyRepository).deleteById(pendingApiKey.getId());
+        // Simular el comportamiento del repositorio
+        when(apiKeyRepository.findByUserApiIdAndStatus(userId, ApiKeyStatus.PENDING))
+                .thenReturn(Optional.of(pendingApiKey));
+        doThrow(new RuntimeException("Deletion failed")).when(apiKeyRepository).deleteById(pendingApiKey.getId());
 
-    // Act: Llamar al método que se está probando
-    // Assert: Verificar que se lanza la excepción esperada
-    assertThrows(RuntimeException.class,
-            () -> apiKeyService.deleteApiKeyByUser(userId)); // Llamada al método para eliminar la API key
-}
+        // Act: Llamar al método que se está probando
+        // Assert: Verificar que se lanza la excepción esperada
+        assertThrows(RuntimeException.class,
+                () -> apiKeyService.deleteApiKeyByUser(userId)); // Llamada al método para eliminar la API key
+    }
+
+    @Test
+    public void testDenyApiKey_Success() {
+        // Arrange
+        Long apiKeyId = 1L;
+        ApiKey apiKey = new ApiKey();
+        apiKey.setId(apiKeyId);
+        apiKey.setStatus(ApiKeyStatus.ACTIVE);
+        apiKey.setUserApiId(1L);
+
+        when(apiKeyRepository.findById(apiKeyId)).thenReturn(Optional.of(apiKey));
+        when(apiKeyRepository.findByUserApiIdAndStatus(apiKey.getUserApiId(), ApiKeyStatus.INACTIVE)).thenReturn(Optional.empty());
+        when(apiKeyRepository.save(any(ApiKey.class))).thenReturn(apiKey);
+
+        // Act
+        ApiKey result = apiKeyService.denyApiKey(apiKeyId);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(ApiKeyStatus.INACTIVE, result.getStatus());
+        verify(apiKeyRepository, times(1)).save(apiKey);
+    }
+
+    @Test
+    public void testDenyApiKey_ApiKeyNotFound() {
+        // Arrange
+        Long apiKeyId = 1L;
+
+        when(apiKeyRepository.findById(apiKeyId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ApiKeyNotFoundException.class, () -> apiKeyService.denyApiKey(apiKeyId));
+    }
+
+    @Test
+    public void testDenyApiKey_AlreadyInactive() {
+        // Arrange
+        Long apiKeyId = 1L;
+        ApiKey apiKey = new ApiKey();
+        apiKey.setId(apiKeyId);
+        apiKey.setStatus(ApiKeyStatus.ACTIVE);
+        apiKey.setUserApiId(1L);
+
+        ApiKey inactiveApiKey = new ApiKey();
+        inactiveApiKey.setId(2L);
+        inactiveApiKey.setStatus(ApiKeyStatus.INACTIVE);
+        inactiveApiKey.setUserApiId(1L);
+
+        when(apiKeyRepository.findById(apiKeyId)).thenReturn(Optional.of(apiKey));
+        when(apiKeyRepository.findByUserApiIdAndStatus(apiKey.getUserApiId(), ApiKeyStatus.INACTIVE)).thenReturn(Optional.of(inactiveApiKey));
+        when(apiKeyRepository.save(any(ApiKey.class))).thenReturn(apiKey);
+
+        // Act
+        ApiKey result = apiKeyService.denyApiKey(apiKeyId);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(ApiKeyStatus.INACTIVE, result.getStatus());
+        verify(apiKeyRepository, times(1)).delete(inactiveApiKey);
+        verify(apiKeyRepository, times(1)).save(apiKey);
+    }
+
 
 }
